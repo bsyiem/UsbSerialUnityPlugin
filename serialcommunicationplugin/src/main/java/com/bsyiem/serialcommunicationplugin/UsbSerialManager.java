@@ -9,6 +9,7 @@ import android.hardware.usb.UsbManager;
 import android.widget.Toast;
 
 import com.felhr.usbserial.UsbSerialDevice;
+import com.physicaloid.lib.Physicaloid;
 import com.unity3d.player.UnityPlayer;
 
 import java.util.Map;
@@ -24,7 +25,9 @@ public class UsbSerialManager extends Fragment {
     UsbDevice device;
     UsbDeviceConnection deviceConnection;
 
+    //uncommenting the following bugs the app. No toasts works
 //    UsbSerialDevice serial;
+
 
     public static void instantiate(String gameObjName){
         INSTANCE = new UsbSerialManager();
@@ -56,9 +59,9 @@ public class UsbSerialManager extends Fragment {
 
     public void printDevices(){
         Toast.makeText(this.getContext(),String.valueOf(this.usbManager.getDeviceList().size()),Toast.LENGTH_LONG).show();
-//        for(Map.Entry<String,UsbDevice> device: this.usbManager.getDeviceList().entrySet()){
-//            Toast.makeText(this.getContext(),device.getValue().getVendorId(),Toast.LENGTH_LONG).show();
-//        }
+        for(Map.Entry<String,UsbDevice> device: this.usbManager.getDeviceList().entrySet()){
+            Toast.makeText(this.getContext(),String.valueOf(device.getValue().getVendorId()),Toast.LENGTH_LONG).show();
+        }
     }
 
     public void showText(String text){
