@@ -23,10 +23,10 @@ public class SerialCommunication extends Fragment {
         UnityPlayer.currentActivity.getFragmentManager().beginTransaction().add(INSTANCE,SerialCommunication.TAG).commit();
     }
 
-    public void createPhysicaloid(){
+    public void createPhysicaloid(int baudRate){
         this.physicaloid = new Physicaloid(this.getContext());
-        this.physicaloid.setBaudrate(9600);
-        Toast.makeText(this.getContext(),"physicaloid created", Toast.LENGTH_LONG).show();
+        this.physicaloid.setBaudrate(baudRate);
+        Toast.makeText(this.getContext(),"physicaloid for baud rate: "+baudRate, Toast.LENGTH_LONG).show();
         Log.d(TAG,"debug test");
     }
 
@@ -57,6 +57,11 @@ public class SerialCommunication extends Fragment {
 
     private void displayToast(String str){
         Toast.makeText(INSTANCE.getContext(), str, Toast.LENGTH_LONG).show();
+    }
+
+    public void sendData(String str){
+        byte[] buf = str.getBytes();
+        physicaloid.write(buf,buf.length);
     }
 }
 
