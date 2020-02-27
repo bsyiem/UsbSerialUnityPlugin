@@ -2,12 +2,18 @@ package com.bsyiem.serialcommunicationplugin;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.physicaloid.lib.Physicaloid;
 import com.physicaloid.lib.usb.driver.uart.ReadLisener;
 import com.unity3d.player.UnityPlayer;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class SerialCommunication extends Fragment {
 
@@ -16,6 +22,17 @@ public class SerialCommunication extends Fragment {
     protected String gameObjName;
 
     protected Physicaloid physicaloid;
+
+    protected String fileName;
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+        Toast.makeText(this.getContext(),"Set File Name:" + fileName, Toast.LENGTH_LONG).show();
+    }
 
     public static void instantiate(String gameObjName){
         INSTANCE = new SerialCommunication();
@@ -27,13 +44,20 @@ public class SerialCommunication extends Fragment {
         this.physicaloid = new Physicaloid(this.getContext());
         this.physicaloid.setBaudrate(baudRate);
         Toast.makeText(this.getContext(),"physicaloid for baud rate: "+baudRate, Toast.LENGTH_LONG).show();
-        Log.d(TAG,"debug test");
     }
 
     public void openConnection(){
         if(physicaloid.open()){
-            Log.d(TAG,"port open");
-            // read listener, When new data is received from Arduino add it to Text view
+
+            final RecorderRunnable myRunnable = new RecorderRunnable();
+            myRunnable.setContext(INSTANCE.getContext());
+            myRunnable.setFileName(fileName);
+
+            //for testing to display text
+//            DisplayTextRunnable myRunnable = new DisplayTextRunnable();
+//            myRunnable.setContext(INSTANCE.getContext());
+
+            // read listener, When new data is received from Arduino
             physicaloid.addReadListener(new ReadLisener() {
                 @Override
                 public void onRead(int size) {
@@ -41,9 +65,12 @@ public class SerialCommunication extends Fragment {
                     byte[] buf = new byte[size];
                     physicaloid.read(buf, size);
 
-                    DisplayTextRunnable myRunnable = new DisplayTextRunnable();
-                    myRunnable.setContext(INSTANCE.getContext());
+                    Log.d(TAG, new String(buf));
+
                     myRunnable.setText(new String(buf));
+
+                    //for testing
+//                    myRunnable.setText(new String(buf));
 
                     UnityPlayer.currentActivity.runOnUiThread(myRunnable);
 //                    Toast.makeText(INSTANCE.getContext(),new String(buf),Toast.LENGTH_LONG).show();
@@ -62,6 +89,54 @@ public class SerialCommunication extends Fragment {
     public void sendData(String str){
         byte[] buf = str.getBytes();
         physicaloid.write(buf,buf.length);
+    }
+}
+
+class RecorderRunnable implements Runnable{
+    String text;
+    Context context;
+    String fileName;
+
+    FileOutputStream fos = null;
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
+    public void setText(String text){
+        this.text = text;
+    }
+
+    public void setFileName(String fileName){
+        this.fileName = fileName;
+        try {
+            fos = context.openFileOutput(fileName,Context.MODE_PRIVATE);
+        } catch (FileNotFoundException e) {
+            Toast.makeText(this.context, "Error OStream", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void run() {
+
+        if (this.text.equals("#")) {
+            Toast.makeText(this.context, "Terminating", Toast.LENGTH_LONG).show();
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    Toast.makeText(this.context, "Error Closing OStream", Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            try {
+                fos.write(text.getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
 
