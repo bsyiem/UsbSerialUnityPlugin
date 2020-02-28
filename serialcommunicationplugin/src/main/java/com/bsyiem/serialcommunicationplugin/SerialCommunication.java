@@ -1,3 +1,11 @@
+/*
+special chars used when receiving:
+# - terminate (switch off all leds)
+$ - permission to light up virtual led
+@ - reaction time recorded - switch off all leds
+ */
+
+
 package com.bsyiem.serialcommunicationplugin;
 
 import android.app.Fragment;
@@ -52,6 +60,7 @@ public class SerialCommunication extends Fragment {
             final RecorderRunnable myRunnable = new RecorderRunnable();
             myRunnable.setContext(INSTANCE.getContext());
             myRunnable.setFileName(fileName);
+            myRunnable.setGameObjName(this.gameObjName);
 
             //for testing to display text
 //            DisplayTextRunnable myRunnable = new DisplayTextRunnable();
@@ -96,6 +105,7 @@ class RecorderRunnable implements Runnable{
     String text;
     Context context;
     String fileName;
+    String gameObjName;
 
     FileOutputStream fos = null;
 
@@ -117,26 +127,39 @@ class RecorderRunnable implements Runnable{
         }
     }
 
+    public void setGameObjName(String gameObjName){
+        this.gameObjName = gameObjName;
+    }
+
     @Override
     public void run() {
 
-        if (this.text.equals("#")) {
-            Toast.makeText(this.context, "Terminating", Toast.LENGTH_LONG).show();
-            if (fos != null) {
+        //"$" switch on LED
+        if(this.text.equals("$")){
+            UnityPlayer.UnitySendMessage(this.gameObjName,"HandleArduinoMessage","$");
+        }else{
+            // "#" program complete - end
+            if (this.text.equals("#")) {
+                Toast.makeText(this.context, "Terminating", Toast.LENGTH_LONG).show();
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                        Toast.makeText(this.context, "Error Closing OStream", Toast.LENGTH_LONG).show();
+                        e.printStackTrace();
+                    }
+                }
+            } else {
                 try {
-                    fos.close();
+                    // received reaction time- switch off all leds
+                    UnityPlayer.UnitySendMessage(this.gameObjName,"HandleArduinoMessage","@");
+                    fos.write(text.getBytes());
                 } catch (IOException e) {
-                    Toast.makeText(this.context, "Error Closing OStream", Toast.LENGTH_LONG).show();
                     e.printStackTrace();
                 }
             }
-        } else {
-            try {
-                fos.write(text.getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
+
     }
 }
 
