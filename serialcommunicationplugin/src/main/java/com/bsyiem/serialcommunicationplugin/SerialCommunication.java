@@ -33,6 +33,8 @@ public class SerialCommunication extends Fragment {
 
     protected String fileName;
 
+    RecorderRunnable myRunnable;
+
     public String getFileName() {
         return fileName;
     }
@@ -57,10 +59,11 @@ public class SerialCommunication extends Fragment {
     public void openConnection(){
         if(physicaloid.open()){
 
-            final RecorderRunnable myRunnable = new RecorderRunnable();
+            myRunnable = new RecorderRunnable();
             myRunnable.setContext(INSTANCE.getContext());
             myRunnable.setFileName(fileName);
             myRunnable.setGameObjName(this.gameObjName);
+            myRunnable.setTAG(TAG);
 
             //for testing to display text
 //            DisplayTextRunnable myRunnable = new DisplayTextRunnable();
@@ -91,6 +94,14 @@ public class SerialCommunication extends Fragment {
         }
     }
 
+    public void writeToFile(String text){
+        myRunnable.writeText(text);
+    }
+
+    public void closeFile(){
+        myRunnable.closeFOS();
+    }
+
     private void displayToast(String str){
         Toast.makeText(INSTANCE.getContext(), str, Toast.LENGTH_LONG).show();
     }
@@ -106,6 +117,7 @@ class RecorderRunnable implements Runnable{
     Context context;
     String fileName;
     String gameObjName;
+    String TAG;
 
     FileOutputStream fos = null;
 
@@ -131,6 +143,32 @@ class RecorderRunnable implements Runnable{
         this.gameObjName = gameObjName;
     }
 
+    public void setTAG(String TAG){
+        this.TAG = TAG;
+    }
+
+    public void writeText(String text){
+        if(fos!=null) {
+            try {
+                fos.write(text.getBytes());
+            } catch (IOException e) {
+                Log.d(TAG, "Error in writing");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void closeFOS(){
+        if (fos != null) {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                Toast.makeText(this.context, "Error Closing OStream", Toast.LENGTH_LONG).show();
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Override
     public void run() {
 
@@ -141,14 +179,11 @@ class RecorderRunnable implements Runnable{
             // "#" program complete - end
             if (this.text.equals("#")) {
                 Toast.makeText(this.context, "Terminating", Toast.LENGTH_LONG).show();
-                if (fos != null) {
-                    try {
-                        fos.close();
-                    } catch (IOException e) {
-                        Toast.makeText(this.context, "Error Closing OStream", Toast.LENGTH_LONG).show();
-                        e.printStackTrace();
-                    }
-                }
+
+                //ask for the number of ball passes and store in file.
+                //closeFOS();
+                UnityPlayer.UnitySendMessage(this.gameObjName,"HandleArduinoMessage", "#");
+
             } else {
                 try {
                     // received reaction time- switch off all leds
