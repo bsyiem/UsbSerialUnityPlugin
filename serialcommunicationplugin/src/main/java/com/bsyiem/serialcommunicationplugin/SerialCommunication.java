@@ -61,7 +61,7 @@ public class SerialCommunication extends Fragment {
 
     public void openConnection(){
         if(physicaloid.open()){
-            Toast.makeText(INSTANCE.getContext(), "Connection Open", Toast.LENGTH_LONG).show();
+            Toast.makeText(INSTANCE.getContext(), "Connection Open, File:" + fileName, Toast.LENGTH_LONG).show();
 
             myRunnable = new RecorderRunnable();
             myRunnable.setContext(INSTANCE.getContext());
