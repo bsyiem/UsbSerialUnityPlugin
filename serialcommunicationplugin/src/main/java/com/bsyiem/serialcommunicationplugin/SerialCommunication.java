@@ -8,11 +8,14 @@ $ - permission to light up virtual led
 
 package com.bsyiem.serialcommunicationplugin;
 
+import android.Manifest;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.physicaloid.lib.Physicaloid;
 import com.physicaloid.lib.usb.driver.uart.ReadLisener;
@@ -41,7 +44,7 @@ public class SerialCommunication extends Fragment {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
-        Toast.makeText(this.getContext(),"Set File Name:" + fileName, Toast.LENGTH_LONG).show();
+//        Toast.makeText(this.getContext(),"Set File Name:" + fileName, Toast.LENGTH_LONG).show();
     }
 
     public static void instantiate(String gameObjName){
@@ -53,11 +56,12 @@ public class SerialCommunication extends Fragment {
     public void createPhysicaloid(int baudRate){
         this.physicaloid = new Physicaloid(this.getContext());
         this.physicaloid.setBaudrate(baudRate);
-        Toast.makeText(this.getContext(),"physicaloid for baud rate: "+baudRate, Toast.LENGTH_LONG).show();
+//        Toast.makeText(this.getContext(),"physicaloid for baud rate: "+baudRate, Toast.LENGTH_LONG).show();
     }
 
     public void openConnection(){
         if(physicaloid.open()){
+            Toast.makeText(INSTANCE.getContext(), "Connection Open", Toast.LENGTH_LONG).show();
 
             myRunnable = new RecorderRunnable();
             myRunnable.setContext(INSTANCE.getContext());
@@ -90,7 +94,8 @@ public class SerialCommunication extends Fragment {
             });
         }else {
             //Error while connecting
-            Toast.makeText(INSTANCE.getContext(), "Cannot open", Toast.LENGTH_LONG).show();
+            Toast.makeText(INSTANCE.getContext(), "Cannot Open Connection ", Toast.LENGTH_LONG).show();
+//            UnityPlayer.UnitySendMessage(this.gameObjName,"HandleArduinoMessage", "#");
         }
     }
 
@@ -104,6 +109,10 @@ public class SerialCommunication extends Fragment {
 
     private void displayToast(String str){
         Toast.makeText(INSTANCE.getContext(), str, Toast.LENGTH_LONG).show();
+    }
+
+    public void closeConnection(){
+        this.physicaloid.close();
     }
 
     public void sendData(String str){

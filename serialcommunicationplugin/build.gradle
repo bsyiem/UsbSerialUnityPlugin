@@ -50,8 +50,8 @@ android.libraryVariants.all { variant ->
     String sourceAARName = "${project.name}-${variant.name}.aar";
 
     // Target.
-    String relevantUnityProject = "UnityProjects/AT_IB"; //for windows
-//    String relevantUnityProject = "../UnityProjects/AR_AT_IB/AR_AT_IB"; //for Mac
+//    String relevantUnityProject = "UnityProjects/AT_IB"; //for windows
+    String relevantUnityProject = "../UnityProjects/AR_AT_IB/AR_AT_IB"; //for Mac
     String targetAssetFolder = "Assets/Plugins/SerialCommunication";
     String targetAARFolder = "${rootDir.getPath()}/../../${relevantUnityProject}/${targetAssetFolder}"; // Navigate into 'Assets'
     String targetAARName = "SerialCommunication.aar"; // The form you ship your plugin
