@@ -1,12 +1,22 @@
 setwd("/Users/bsyiem/Documents/Rscripts");
 
-#used to easily plot qqplots
+#used to easily plot qqplots and Anova
 library("car");
+library("ez");
 
 #for two way Anova
 library(tidyverse);
 library(ggpubr);
 library(rstatix);
+
+#Multilevel Linear Model
+library(lme4);
+library(lmerTest);
+
+#data formatting
+library(dplyr);
+library(tidyr);
+library(data.table);
 
 #returns the means of each sample concatenated in a list
 ## returns a data fram with
@@ -269,10 +279,39 @@ ggqqplot(myData,"meanRT", ggtheme = theme_bw()) +
   facet_grid(event ~ scenario, labeller = "label_both");
 
 ######################################################
-# REPEATED MEASURE ANOVA
+# REPEATED MEASURE ANOVA (Yatani)
+######################################################
+
+#test homogeneity
+leveneTest(myData$meanRT~myData$event*myData$scenario);
+
+## no repeated measure
+options(contrasts = c("contr.sum","contr.poly"));
+Anova(lm(myData$meanRT~myData$event*myData$scenario),type = "III");
+
+options(contrasts = c("contr.sum","contr.poly"));
+ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(event,scenario), type = 3);
+        
+######################################################
+# TEST
+# REPEATED MEASURE ANOVA (rstatix)
+# THIS IS NOT WORKING
 ######################################################
 
 rt.aov <- anova_test(data = myData,dv = meanRT, wid = pid, within = c(scenario,event));
 get_anova_table(rt.aov);
 
 lm(meanRT~pid+event:scenario,data = myData);
+
+######################################################
+# TEST
+# Multi-Level Linear Model
+# THIS IS NOT WORKING
+######################################################
+rt.mlm <- lmer(meanRT ~ event*scenario + (1|pid), data = myData);
+anova(rt.mlm);
+
+##non repeated measure for contrast
+rt.lm <- lm(meanRT ~ event*scenario,data = myData);
+anova(rt.lm);
+
