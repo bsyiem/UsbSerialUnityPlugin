@@ -3,6 +3,11 @@ setwd("/Users/bsyiem/Documents/Rscripts");
 #used to easily plot qqplots
 library("car");
 
+#for two way Anova
+library(tidyverse);
+library(ggpubr);
+library(rstatix);
+
 #returns the means of each sample concatenated in a list
 ## returns a data fram with
 # p_id
@@ -60,12 +65,17 @@ calculateMeansOfObs <- function(mpath,mfiles){
     participantNumbers <- c(participantNumbers,as.character(p_id));
   }
   
-  meanParticipantReaction<- data.frame(participantNumbers, meanRT, peripheralMeanRT, centralMeanRT, stringsAsFactors = FALSE);
+  meanParticipantReaction<- data.frame(pid = as.factor(participantNumbers), meanRT, peripheralMeanRT, centralMeanRT, stringsAsFactors = FALSE);
   return(meanParticipantReaction);
 }
 
 addGender <- function(dataFrame,gender){
   dataFrame <- cbind(dataFrame,gender = rep(gender,nrow(dataFrame)));
+  return(dataFrame);
+}
+
+addEvent <- function(dataFrame,event){
+  dataFrame <- cbind(dataFrame,event = rep(event,nrow(dataFrame)));
   return(dataFrame);
 }
 
@@ -90,7 +100,8 @@ malePhysicalNoAR <- list.files(path = malePath,
 
 meansMalePhysicalNoAR <- calculateMeansOfObs(malePath,malePhysicalNoAR);
 meansMalePhysicalNoAR <- addGender(meansMalePhysicalNoAR,"M");
-meansMalePhysicalNoAR <- addScenario(meansMalePhysicalNoAR,"PNAR");
+meansMalePhysicalNoAR <- addEvent(meansMalePhysicalNoAR,"P")
+meansMalePhysicalNoAR <- addScenario(meansMalePhysicalNoAR,"NC");
 
 #male, physical, ar and no task files
 malePhysicalAR <- list.files(path = malePath,
@@ -99,7 +110,8 @@ malePhysicalAR <- list.files(path = malePath,
 
 meansMalePhysicalAR <- calculateMeansOfObs(malePath,malePhysicalAR);
 meansMalePhysicalAR <- addGender(meansMalePhysicalAR,"M");
-meansMalePhysicalAR <- addScenario(meansMalePhysicalAR,"PAR");
+meansMalePhysicalAR <- addEvent(meansMalePhysicalAR,"P");
+meansMalePhysicalAR <- addScenario(meansMalePhysicalAR,"VC");
 
 
 #male, physical, ar and task files
@@ -109,7 +121,8 @@ malePhysicalARTask <- list.files(path = malePath,
 
 meansMalePhysicalARTask <- calculateMeansOfObs(malePath,malePhysicalARTask);
 meansMalePhysicalARTask <- addGender(meansMalePhysicalARTask,"M");
-meansMalePhysicalARTask <- addScenario(meansMalePhysicalARTask,"PART")
+meansMalePhysicalARTask <- addEvent(meansMalePhysicalARTask,"P");
+meansMalePhysicalARTask <- addScenario(meansMalePhysicalARTask,"VCT")
 
 #male, virtual, no ar and no task files
 maleVirtualNoAR <- list.files(path = malePath,
@@ -118,7 +131,8 @@ maleVirtualNoAR <- list.files(path = malePath,
 
 meansMaleVirtualNoAR <- calculateMeansOfObs(malePath,maleVirtualNoAR);
 meansMaleVirtualNoAR <- addGender(meansMaleVirtualNoAR,"M");
-meansMaleVirtualNoAR <- addScenario(meansMaleVirtualNoAR,"VNAR");
+meansMaleVirtualNoAR <- addEvent(meansMaleVirtualNoAR,"V");
+meansMaleVirtualNoAR <- addScenario(meansMaleVirtualNoAR,"NC");
 
 #male, virtual, ar and no task files
 maleVirtualAR <- list.files(path = malePath,
@@ -127,7 +141,8 @@ maleVirtualAR <- list.files(path = malePath,
 
 meansMaleVirtualAR <- calculateMeansOfObs(malePath,maleVirtualAR);
 meansMaleVirtualAR <- addGender(meansMaleVirtualAR,"M");
-meansMaleVirtualAR <- addScenario(meansMaleVirtualAR,"VAR");
+meansMaleVirtualAR <- addEvent(meansMaleVirtualAR,"V");
+meansMaleVirtualAR <- addScenario(meansMaleVirtualAR,"VC");
 
 #male, virtual, ar and task files
 maleVirtualARTask <- list.files(path = malePath,
@@ -136,7 +151,8 @@ maleVirtualARTask <- list.files(path = malePath,
 
 meansMaleVirtualARTask <- calculateMeansOfObs(malePath,maleVirtualARTask);
 meansMaleVirtualARTask <- addGender(meansMaleVirtualARTask,"M");
-meansMaleVirtualARTask <- addScenario(meansMaleVirtualARTask,"VART");
+meansMaleVirtualARTask <- addEvent(meansMaleVirtualARTask,"V");
+meansMaleVirtualARTask <- addScenario(meansMaleVirtualARTask,"VCT");
 
 ########################################################################
 #Females
@@ -149,7 +165,8 @@ femalePhysicalNoAR <- list.files(path = femalePath,
 
 meansFemalePhysicalNoAR <- calculateMeansOfObs(femalePath,femalePhysicalNoAR);
 meansFemalePhysicalNoAR <- addGender(meansFemalePhysicalNoAR,"F");
-meansFemalePhysicalNoAR <- addScenario(meansFemalePhysicalNoAR,"PNAR");
+meansFemalePhysicalNoAR <- addEvent(meansFemalePhysicalNoAR,"P");
+meansFemalePhysicalNoAR <- addScenario(meansFemalePhysicalNoAR,"NC");
 
 #female, physical, ar and no task files
 femalePhysicalAR <- list.files(path = femalePath,
@@ -158,7 +175,8 @@ femalePhysicalAR <- list.files(path = femalePath,
 
 meansFemalePhysicalAR <- calculateMeansOfObs(femalePath,femalePhysicalAR);
 meansFemalePhysicalAR <- addGender(meansFemalePhysicalAR, "F");
-meansFemalePhysicalAR <- addScenario(meansFemalePhysicalAR, "PAR");
+meansFemalePhysicalAR <- addEvent(meansFemalePhysicalAR, "P");
+meansFemalePhysicalAR <- addScenario(meansFemalePhysicalAR, "VC");
 
 #female, physical, ar and task files
 femalePhysicalARTask <- list.files(path = femalePath,
@@ -167,7 +185,8 @@ femalePhysicalARTask <- list.files(path = femalePath,
 
 meansFemalePhysicalARTask <- calculateMeansOfObs(femalePath,femalePhysicalARTask);
 meansFemalePhysicalARTask <- addGender(meansFemalePhysicalARTask, "F");
-meansFemalePhysicalARTask <- addScenario(meansFemalePhysicalARTask,"PART");
+meansFemalePhysicalARTask <- addEvent(meansFemalePhysicalARTask, "P");
+meansFemalePhysicalARTask <- addScenario(meansFemalePhysicalARTask,"VCT");
 
 #female, virtual, no ar and no task files
 femaleVirtualNoAR <- list.files(path = femalePath,
@@ -176,7 +195,8 @@ femaleVirtualNoAR <- list.files(path = femalePath,
 
 meansFemaleVirtualNoAR <- calculateMeansOfObs(femalePath,femaleVirtualNoAR);
 meansFemaleVirtualNoAR <- addGender(meansFemaleVirtualNoAR,"F");
-meansFemaleVirtualNoAR <- addScenario(meansFemaleVirtualNoAR,"VNAR");
+meansFemaleVirtualNoAR <- addEvent(meansFemaleVirtualNoAR,"V");
+meansFemaleVirtualNoAR <- addScenario(meansFemaleVirtualNoAR,"NC");
 
 #female, virtual, ar and no task files
 femaleVirtualAR <- list.files(path = femalePath,
@@ -185,7 +205,8 @@ femaleVirtualAR <- list.files(path = femalePath,
 
 meansFemaleVirtualAR <- calculateMeansOfObs(femalePath,femaleVirtualAR);
 meansFemaleVirtualAR <- addGender(meansFemaleVirtualAR,"F"); 
-meansFemaleVirtualAR <- addScenario(meansFemaleVirtualAR,"VAR");
+meansFemaleVirtualAR <- addEvent(meansFemaleVirtualAR,"V"); 
+meansFemaleVirtualAR <- addScenario(meansFemaleVirtualAR,"VC");
 
 #female, virtual, ar and task files
 femaleVirtualARTask <- list.files(path = femalePath,
@@ -194,7 +215,8 @@ femaleVirtualARTask <- list.files(path = femalePath,
 
 meansFemaleVirtualARTask <- calculateMeansOfObs(femalePath,femaleVirtualARTask);
 meansFemaleVirtualARTask <- addGender(meansFemaleVirtualARTask,"F");
-meansFemaleVirtualARTask <- addScenario(meansFemaleVirtualARTask,"VART");
+meansFemaleVirtualARTask <- addEvent(meansFemaleVirtualARTask,"V");
+meansFemaleVirtualARTask <- addScenario(meansFemaleVirtualARTask,"VCT");
 
 ########################################################################
 #ALL
@@ -222,34 +244,35 @@ myData <- rbind(
   meansVirtualARTask);
 
 #########################################
-#check for normality 
+# summary statistics
 #########################################
+myData %>% group_by(scenario,event) %>% get_summary_stats(meanRT,type = "mean_sd");
 
-#males
-qqPlot(meansMalePhysicalNoAR$means);
-qqPlot(meansMalePhysicalAR$means);
-qqPlot(meansMalePhysicalARTask$means);
-qqPlot(meansMaleVirtualNoAR$means);
-qqPlot(meansMaleVirtualAR$means);
-qqPlot(meansMaleVirtualARTask$means);
+#########################################
+# visualizations
+#########################################
+bxp <- ggboxplot(
+  myData, x = "event", y = "meanRT",
+  color = "scenario", palette = "jco"
+);
+bxp;
 
-#females
-qqPlot(meansFemalePhysicalNoAR$means);
-qqPlot(meansFemalePhysicalAR$means);
-qqPlot(meansFemalePhysicalARTask$means);
-qqPlot(meansFemaleVirtualNoAR$means);
-qqPlot(meansFemaleVirtualAR$means);
-qqPlot(meansFemaleVirtualARTask$means);
-
-#all
-qqPlot(meansPhysicalNoAR$means);
-qqPlot(meansPhysicalAR$means);
-qqPlot(meansPhysicalARTask$means);
-qqPlot(meansVirtualNoAR$means);
-qqPlot(meansVirtualAR$means);
-qqPlot(meansVirtualARTask$means);
+#########################################
+# Assumptions
+#########################################
+#outlier
+myData %>% group_by(scenario,event) %>% identify_outliers(meanRT);
+#shapiro test
+myData %>% group_by(scenario,event) %>% shapiro_test(meanRT);
+#qqplots
+ggqqplot(myData,"meanRT", ggtheme = theme_bw()) + 
+  facet_grid(event ~ scenario, labeller = "label_both");
 
 ######################################################
-# FOR REPEATED MEASURE ANOVA
+# REPEATED MEASURE ANOVA
 ######################################################
 
+rt.aov <- anova_test(data = myData,dv = meanRT, wid = pid, within = c(scenario,event));
+get_anova_table(rt.aov);
+
+lm(meanRT~pid+event:scenario,data = myData);
