@@ -79,16 +79,27 @@ calculateMeansOfObs <- function(mpath,mfiles){
   return(meanParticipantReaction);
 }
 
+
+##
+# M - Male
+# F - Female
 addGender <- function(dataFrame,gender){
   dataFrame <- cbind(dataFrame,gender = rep(gender,nrow(dataFrame)));
   return(dataFrame);
 }
 
+##
+# P - Physical Event
+# V - Virtual Event
 addEvent <- function(dataFrame,event){
   dataFrame <- cbind(dataFrame,event = rep(event,nrow(dataFrame)));
   return(dataFrame);
 }
 
+##
+# NC - No Content
+# VC - Virtual Content
+# VCT - Virtual Content + Task
 addScenario <- function(dataFrame,scenario){
   dataFrame <- cbind(dataFrame,scenario = rep(scenario,nrow(dataFrame)));
   return(dataFrame);
