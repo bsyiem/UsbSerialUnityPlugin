@@ -280,6 +280,9 @@ ggqqplot(myData,"meanRT", ggtheme = theme_bw()) +
 
 ######################################################
 # REPEATED MEASURE ANOVA (Yatani)
+
+# note I am using more than one test for the same calculations
+# just to be sure I am getting the correct values
 ######################################################
 
 #test homogeneity
@@ -290,8 +293,89 @@ options(contrasts = c("contr.sum","contr.poly"));
 Anova(lm(myData$meanRT~myData$event*myData$scenario),type = "III");
 
 options(contrasts = c("contr.sum","contr.poly"));
-ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(event,scenario), type = 3);
-        
+rt.ez <- ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(event,scenario), type = 3);
+rt.ez;
+
+#this is the same as the above
+rt.aov <- aov(meanRT ~ scenario*event + Error(pid/(scenario*event)), myData);
+summary(rt.aov);
+
+######################################################
+# Post Hoc Analysis
+######################################################
+
+
+#----------------------------------------------------#
+# effect of event on RT (within event)
+#----------------------------------------------------#
+
+#using aov
+rt.aov.oneway.scenarioNC <- aov(meanRT ~ event +Error(pid/event),myData[(myData$scenario == "NC"),]);
+summary(rt.aov.oneway.scenarioNC);
+rt.aov.oneway.scenarioVC <- aov(meanRT ~ event +Error(pid/event),myData[(myData$scenario == "VC"),]);
+summary(rt.aov.oneway.scenarioVC);
+rt.aov.oneway.scenarioVCT <- aov(meanRT ~ event +Error(pid/event),myData[(myData$scenario == "VCT"),]);
+summary(rt.aov.oneway.scenarioVCT);
+
+#using ez package
+ezANOVA(data = myData[(myData$scenario == "NC"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
+ezANOVA(data = myData[(myData$scenario == "VC"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
+ezANOVA(data = myData[(myData$scenario == "VCT"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
+
+#since event only has 1 degree of freedom, a paiwise t test works
+pairwise.t.test(
+  myData[(myData$scenario == "NC"),]$meanRT,
+  myData[(myData$scenario == "NC"),]$event,
+  paired = TRUE, 
+  p.adjust.method = "bonf");
+pairwise.t.test(
+  myData[(myData$scenario == "VC"),]$meanRT,
+  myData[(myData$scenario == "VC"),]$event,
+  paired = TRUE, 
+  p.adjust.method = "bonf");
+pairwise.t.test(
+  myData[(myData$scenario == "VCT"),]$meanRT,
+  myData[(myData$scenario == "VCT"),]$event,
+  paired = TRUE, 
+  p.adjust.method = "bonf");
+
+#using rstatix
+myData %>% group_by(scenario) %>% pairwise_t_test(meanRT ~ event, paired = TRUE, p.adjust.method = "bonferroni");
+
+#----------------------------------------------------#
+# effect of scenario on RT (within scenario)
+#----------------------------------------------------#
+
+#using aov
+rt.aov.oneway.eventP<- aov(meanRT ~ scenario +Error(pid/scenario),myData[(myData$event == "P"),]);
+summary(rt.aov.oneway.eventP);
+rt.aov.oneway.eventV <- aov(meanRT ~ scenario +Error(pid/scenario),myData[(myData$event == "V"),]);
+summary(rt.aov.oneway.eventV);
+
+#using ez
+ezANOVA(data = myData[(myData$event == "P"),], dv = .(meanRT), wid = .(pid), within = .(scenario), type = 3);
+ezANOVA(data = myData[(myData$event == "V"),], dv = .(meanRT), wid = .(pid), within = .(scenario), type = 3);
+
+# Both are significant so we will move on to pairwise t tests
+
+#using pairwiset.tests
+pairwise.t.test(
+  myData[(myData$event == "P"),]$meanRT,
+  myData[(myData$event == "P"),]$scenario,
+  paired =TRUE,
+  p.adjust.method = "bonf"
+);
+
+pairwise.t.test(
+  myData[(myData$event == "V"),]$meanRT,
+  myData[(myData$event == "V"),]$scenario,
+  paired =TRUE,
+  p.adjust.method = "bonf"
+);
+
+#using rstatix
+myData %>% group_by(event) %>% pairwise_t_test(meanRT ~ scenario, paired = TRUE, p.adjust.method = "bonferroni");
+
 ######################################################
 # TEST
 # REPEATED MEASURE ANOVA (rstatix)
