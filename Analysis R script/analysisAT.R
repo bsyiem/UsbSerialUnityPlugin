@@ -100,8 +100,8 @@ addEvent <- function(dataFrame,event){
 # NC - No Content
 # VC - Virtual Content
 # VCT - Virtual Content + Task
-addScenario <- function(dataFrame,scenario){
-  dataFrame <- cbind(dataFrame,scenario = rep(scenario,nrow(dataFrame)));
+addContent <- function(dataFrame,content){
+  dataFrame <- cbind(dataFrame,content = rep(content,nrow(dataFrame)));
   return(dataFrame);
 }
 
@@ -122,7 +122,7 @@ malePhysicalNoAR <- list.files(path = malePath,
 meansMalePhysicalNoAR <- calculateMeansOfObs(malePath,malePhysicalNoAR);
 meansMalePhysicalNoAR <- addGender(meansMalePhysicalNoAR,"M");
 meansMalePhysicalNoAR <- addEvent(meansMalePhysicalNoAR,"P")
-meansMalePhysicalNoAR <- addScenario(meansMalePhysicalNoAR,"NC");
+meansMalePhysicalNoAR <- addContent(meansMalePhysicalNoAR,"NC");
 
 #male, physical, ar and no task files
 malePhysicalAR <- list.files(path = malePath,
@@ -132,7 +132,7 @@ malePhysicalAR <- list.files(path = malePath,
 meansMalePhysicalAR <- calculateMeansOfObs(malePath,malePhysicalAR);
 meansMalePhysicalAR <- addGender(meansMalePhysicalAR,"M");
 meansMalePhysicalAR <- addEvent(meansMalePhysicalAR,"P");
-meansMalePhysicalAR <- addScenario(meansMalePhysicalAR,"VC");
+meansMalePhysicalAR <- addContent(meansMalePhysicalAR,"VC");
 
 
 #male, physical, ar and task files
@@ -143,7 +143,7 @@ malePhysicalARTask <- list.files(path = malePath,
 meansMalePhysicalARTask <- calculateMeansOfObs(malePath,malePhysicalARTask);
 meansMalePhysicalARTask <- addGender(meansMalePhysicalARTask,"M");
 meansMalePhysicalARTask <- addEvent(meansMalePhysicalARTask,"P");
-meansMalePhysicalARTask <- addScenario(meansMalePhysicalARTask,"VCT")
+meansMalePhysicalARTask <- addContent(meansMalePhysicalARTask,"VCT")
 
 #male, virtual, no ar and no task files
 maleVirtualNoAR <- list.files(path = malePath,
@@ -153,7 +153,7 @@ maleVirtualNoAR <- list.files(path = malePath,
 meansMaleVirtualNoAR <- calculateMeansOfObs(malePath,maleVirtualNoAR);
 meansMaleVirtualNoAR <- addGender(meansMaleVirtualNoAR,"M");
 meansMaleVirtualNoAR <- addEvent(meansMaleVirtualNoAR,"V");
-meansMaleVirtualNoAR <- addScenario(meansMaleVirtualNoAR,"NC");
+meansMaleVirtualNoAR <- addContent(meansMaleVirtualNoAR,"NC");
 
 #male, virtual, ar and no task files
 maleVirtualAR <- list.files(path = malePath,
@@ -163,7 +163,7 @@ maleVirtualAR <- list.files(path = malePath,
 meansMaleVirtualAR <- calculateMeansOfObs(malePath,maleVirtualAR);
 meansMaleVirtualAR <- addGender(meansMaleVirtualAR,"M");
 meansMaleVirtualAR <- addEvent(meansMaleVirtualAR,"V");
-meansMaleVirtualAR <- addScenario(meansMaleVirtualAR,"VC");
+meansMaleVirtualAR <- addContent(meansMaleVirtualAR,"VC");
 
 #male, virtual, ar and task files
 maleVirtualARTask <- list.files(path = malePath,
@@ -173,7 +173,7 @@ maleVirtualARTask <- list.files(path = malePath,
 meansMaleVirtualARTask <- calculateMeansOfObs(malePath,maleVirtualARTask);
 meansMaleVirtualARTask <- addGender(meansMaleVirtualARTask,"M");
 meansMaleVirtualARTask <- addEvent(meansMaleVirtualARTask,"V");
-meansMaleVirtualARTask <- addScenario(meansMaleVirtualARTask,"VCT");
+meansMaleVirtualARTask <- addContent(meansMaleVirtualARTask,"VCT");
 
 ########################################################################
 #Females
@@ -187,7 +187,7 @@ femalePhysicalNoAR <- list.files(path = femalePath,
 meansFemalePhysicalNoAR <- calculateMeansOfObs(femalePath,femalePhysicalNoAR);
 meansFemalePhysicalNoAR <- addGender(meansFemalePhysicalNoAR,"F");
 meansFemalePhysicalNoAR <- addEvent(meansFemalePhysicalNoAR,"P");
-meansFemalePhysicalNoAR <- addScenario(meansFemalePhysicalNoAR,"NC");
+meansFemalePhysicalNoAR <- addContent(meansFemalePhysicalNoAR,"NC");
 
 #female, physical, ar and no task files
 femalePhysicalAR <- list.files(path = femalePath,
@@ -197,7 +197,7 @@ femalePhysicalAR <- list.files(path = femalePath,
 meansFemalePhysicalAR <- calculateMeansOfObs(femalePath,femalePhysicalAR);
 meansFemalePhysicalAR <- addGender(meansFemalePhysicalAR, "F");
 meansFemalePhysicalAR <- addEvent(meansFemalePhysicalAR, "P");
-meansFemalePhysicalAR <- addScenario(meansFemalePhysicalAR, "VC");
+meansFemalePhysicalAR <- addContent(meansFemalePhysicalAR, "VC");
 
 #female, physical, ar and task files
 femalePhysicalARTask <- list.files(path = femalePath,
@@ -207,7 +207,7 @@ femalePhysicalARTask <- list.files(path = femalePath,
 meansFemalePhysicalARTask <- calculateMeansOfObs(femalePath,femalePhysicalARTask);
 meansFemalePhysicalARTask <- addGender(meansFemalePhysicalARTask, "F");
 meansFemalePhysicalARTask <- addEvent(meansFemalePhysicalARTask, "P");
-meansFemalePhysicalARTask <- addScenario(meansFemalePhysicalARTask,"VCT");
+meansFemalePhysicalARTask <- addContent(meansFemalePhysicalARTask,"VCT");
 
 #female, virtual, no ar and no task files
 femaleVirtualNoAR <- list.files(path = femalePath,
@@ -217,7 +217,7 @@ femaleVirtualNoAR <- list.files(path = femalePath,
 meansFemaleVirtualNoAR <- calculateMeansOfObs(femalePath,femaleVirtualNoAR);
 meansFemaleVirtualNoAR <- addGender(meansFemaleVirtualNoAR,"F");
 meansFemaleVirtualNoAR <- addEvent(meansFemaleVirtualNoAR,"V");
-meansFemaleVirtualNoAR <- addScenario(meansFemaleVirtualNoAR,"NC");
+meansFemaleVirtualNoAR <- addContent(meansFemaleVirtualNoAR,"NC");
 
 #female, virtual, ar and no task files
 femaleVirtualAR <- list.files(path = femalePath,
@@ -227,7 +227,7 @@ femaleVirtualAR <- list.files(path = femalePath,
 meansFemaleVirtualAR <- calculateMeansOfObs(femalePath,femaleVirtualAR);
 meansFemaleVirtualAR <- addGender(meansFemaleVirtualAR,"F"); 
 meansFemaleVirtualAR <- addEvent(meansFemaleVirtualAR,"V"); 
-meansFemaleVirtualAR <- addScenario(meansFemaleVirtualAR,"VC");
+meansFemaleVirtualAR <- addContent(meansFemaleVirtualAR,"VC");
 
 #female, virtual, ar and task files
 femaleVirtualARTask <- list.files(path = femalePath,
@@ -237,7 +237,7 @@ femaleVirtualARTask <- list.files(path = femalePath,
 meansFemaleVirtualARTask <- calculateMeansOfObs(femalePath,femaleVirtualARTask);
 meansFemaleVirtualARTask <- addGender(meansFemaleVirtualARTask,"F");
 meansFemaleVirtualARTask <- addEvent(meansFemaleVirtualARTask,"V");
-meansFemaleVirtualARTask <- addScenario(meansFemaleVirtualARTask,"VCT");
+meansFemaleVirtualARTask <- addContent(meansFemaleVirtualARTask,"VCT");
 
 ########################################################################
 #ALL
@@ -267,14 +267,14 @@ myData <- rbind(
 #########################################
 # summary statistics
 #########################################
-myData %>% group_by(scenario,event) %>% get_summary_stats(meanRT,type = "mean_sd");
+myData %>% group_by(content,event) %>% get_summary_stats(meanRT,type = "mean_sd");
 
 #########################################
 # visualizations
 #########################################
 bxp <- ggboxplot(
   myData, x = "event", y = "meanRT",
-  color = "scenario", palette = "jco"
+  color = "content", palette = "jco"
 );
 bxp;
 
@@ -282,12 +282,30 @@ bxp;
 # Assumptions
 #########################################
 #outlier
-myData %>% group_by(scenario,event) %>% identify_outliers(meanRT);
+myData %>% group_by(content,event) %>% identify_outliers(meanRT);
 #shapiro test
-myData %>% group_by(scenario,event) %>% shapiro_test(meanRT);
+myData %>% group_by(content,event) %>% shapiro_test(meanRT);
+
+## since the shapiro-wilk test for VCT content for both events are significant
+## we also test using the ks test
+#kolmogorov-smirnov test
+ks.test(
+  myData[((myData$event == "P") & (myData$content == "VCT")),]$meanRT,
+  "pnorm",
+  mean = mean(myData[((myData$event == "P") & (myData$content == "VCT")),]$meanRT),
+  sd = sd(myData[((myData$event == "P") & (myData$content == "VCT")),]$meanRT)
+);
+
+ks.test(
+  myData[((myData$event == "V") & (myData$content == "VCT")),]$meanRT,
+  "pnorm",
+  mean = mean(myData[((myData$event == "V") & (myData$content == "VCT")),]$meanRT),
+  sd = sd(myData[((myData$event == "V") & (myData$content == "VCT")),]$meanRT)
+);
+
 #qqplots
 ggqqplot(myData,"meanRT", ggtheme = theme_bw()) + 
-  facet_grid(event ~ scenario, labeller = "label_both");
+  facet_grid(event ~ content, labeller = "label_both");
 
 ######################################################
 # REPEATED MEASURE ANOVA (Yatani)
@@ -297,18 +315,18 @@ ggqqplot(myData,"meanRT", ggtheme = theme_bw()) +
 ######################################################
 
 #test homogeneity
-leveneTest(myData$meanRT~myData$event*myData$scenario);
+leveneTest(myData$meanRT~myData$event*myData$content);
 
 ## no repeated measure
 options(contrasts = c("contr.sum","contr.poly"));
-Anova(lm(myData$meanRT~myData$event*myData$scenario),type = "III");
+Anova(lm(myData$meanRT~myData$event*myData$content),type = "III");
 
 options(contrasts = c("contr.sum","contr.poly"));
-rt.ez <- ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(event,scenario), type = 3);
+rt.ez <- ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(event,content), type = 3);
 rt.ez;
 
 #this is the same as the above
-rt.aov <- aov(meanRT ~ scenario*event + Error(pid/(scenario*event)), myData);
+rt.aov <- aov(meanRT ~ content*event + Error(pid/(content*event)), myData);
 summary(rt.aov);
 
 ######################################################
@@ -321,71 +339,71 @@ summary(rt.aov);
 #----------------------------------------------------#
 
 #using aov
-rt.aov.oneway.scenarioNC <- aov(meanRT ~ event +Error(pid/event),myData[(myData$scenario == "NC"),]);
-summary(rt.aov.oneway.scenarioNC);
-rt.aov.oneway.scenarioVC <- aov(meanRT ~ event +Error(pid/event),myData[(myData$scenario == "VC"),]);
-summary(rt.aov.oneway.scenarioVC);
-rt.aov.oneway.scenarioVCT <- aov(meanRT ~ event +Error(pid/event),myData[(myData$scenario == "VCT"),]);
-summary(rt.aov.oneway.scenarioVCT);
+rt.aov.oneway.contentNC <- aov(meanRT ~ event +Error(pid/event),myData[(myData$content == "NC"),]);
+summary(rt.aov.oneway.contentNC);
+rt.aov.oneway.contentVC <- aov(meanRT ~ event +Error(pid/event),myData[(myData$content == "VC"),]);
+summary(rt.aov.oneway.contentVC);
+rt.aov.oneway.contentVCT <- aov(meanRT ~ event +Error(pid/event),myData[(myData$content == "VCT"),]);
+summary(rt.aov.oneway.contentVCT);
 
 #using ez package
-ezANOVA(data = myData[(myData$scenario == "NC"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
-ezANOVA(data = myData[(myData$scenario == "VC"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
-ezANOVA(data = myData[(myData$scenario == "VCT"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
+ezANOVA(data = myData[(myData$content == "NC"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
+ezANOVA(data = myData[(myData$content == "VC"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
+ezANOVA(data = myData[(myData$content == "VCT"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
 
 #since event only has 1 degree of freedom, a paiwise t test works
 pairwise.t.test(
-  myData[(myData$scenario == "NC"),]$meanRT,
-  myData[(myData$scenario == "NC"),]$event,
+  myData[(myData$content == "NC"),]$meanRT,
+  myData[(myData$content == "NC"),]$event,
   paired = TRUE, 
   p.adjust.method = "bonf");
 pairwise.t.test(
-  myData[(myData$scenario == "VC"),]$meanRT,
-  myData[(myData$scenario == "VC"),]$event,
+  myData[(myData$content == "VC"),]$meanRT,
+  myData[(myData$content == "VC"),]$event,
   paired = TRUE, 
   p.adjust.method = "bonf");
 pairwise.t.test(
-  myData[(myData$scenario == "VCT"),]$meanRT,
-  myData[(myData$scenario == "VCT"),]$event,
+  myData[(myData$content == "VCT"),]$meanRT,
+  myData[(myData$content == "VCT"),]$event,
   paired = TRUE, 
   p.adjust.method = "bonf");
 
 #using rstatix
-myData %>% group_by(scenario) %>% pairwise_t_test(meanRT ~ event, paired = TRUE, p.adjust.method = "bonferroni");
+myData %>% group_by(content) %>% pairwise_t_test(meanRT ~ event, paired = TRUE, p.adjust.method = "bonferroni");
 
 #----------------------------------------------------#
-# effect of scenario on RT (within scenario)
+# effect of content on RT (within content)
 #----------------------------------------------------#
 
 #using aov
-rt.aov.oneway.eventP<- aov(meanRT ~ scenario +Error(pid/scenario),myData[(myData$event == "P"),]);
+rt.aov.oneway.eventP<- aov(meanRT ~ content +Error(pid/content),myData[(myData$event == "P"),]);
 summary(rt.aov.oneway.eventP);
-rt.aov.oneway.eventV <- aov(meanRT ~ scenario +Error(pid/scenario),myData[(myData$event == "V"),]);
+rt.aov.oneway.eventV <- aov(meanRT ~ content +Error(pid/content),myData[(myData$event == "V"),]);
 summary(rt.aov.oneway.eventV);
 
 #using ez
-ezANOVA(data = myData[(myData$event == "P"),], dv = .(meanRT), wid = .(pid), within = .(scenario), type = 3);
-ezANOVA(data = myData[(myData$event == "V"),], dv = .(meanRT), wid = .(pid), within = .(scenario), type = 3);
+ezANOVA(data = myData[(myData$event == "P"),], dv = .(meanRT), wid = .(pid), within = .(content), type = 3);
+ezANOVA(data = myData[(myData$event == "V"),], dv = .(meanRT), wid = .(pid), within = .(content), type = 3);
 
 # Both are significant so we will move on to pairwise t tests
 
 #using pairwiset.tests
 pairwise.t.test(
   myData[(myData$event == "P"),]$meanRT,
-  myData[(myData$event == "P"),]$scenario,
+  myData[(myData$event == "P"),]$content,
   paired =TRUE,
   p.adjust.method = "bonf"
 );
 
 pairwise.t.test(
   myData[(myData$event == "V"),]$meanRT,
-  myData[(myData$event == "V"),]$scenario,
+  myData[(myData$event == "V"),]$content,
   paired =TRUE,
   p.adjust.method = "bonf"
 );
 
 #using rstatix
-myData %>% group_by(event) %>% pairwise_t_test(meanRT ~ scenario, paired = TRUE, p.adjust.method = "bonferroni");
+myData %>% group_by(event) %>% pairwise_t_test(meanRT ~ content, paired = TRUE, p.adjust.method = "bonferroni");
 
 ######################################################
 # TEST
@@ -393,20 +411,20 @@ myData %>% group_by(event) %>% pairwise_t_test(meanRT ~ scenario, paired = TRUE,
 # THIS IS NOT WORKING
 ######################################################
 
-rt.aov <- anova_test(data = myData,dv = meanRT, wid = pid, within = c(scenario,event));
+rt.aov <- anova_test(data = myData,dv = meanRT, wid = pid, within = c(content,event));
 get_anova_table(rt.aov);
 
-lm(meanRT~pid+event:scenario,data = myData);
+lm(meanRT~pid+event:content,data = myData);
 
 ######################################################
 # TEST
 # Multi-Level Linear Model
 # THIS IS NOT WORKING
 ######################################################
-rt.mlm <- lmer(meanRT ~ event*scenario + (1|pid), data = myData);
+rt.mlm <- lmer(meanRT ~ event*content + (1|pid), data = myData);
 anova(rt.mlm);
 
 ##non repeated measure for contrast
-rt.lm <- lm(meanRT ~ event*scenario,data = myData);
+rt.lm <- lm(meanRT ~ event*content,data = myData);
 anova(rt.lm);
 
