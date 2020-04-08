@@ -47,7 +47,7 @@ calculateMeansOfObs <- function(mpath,mfiles){
     
     
     #led number 4 is the central led and is the only physical led that is not visible through peripheral vision
-
+    
     #dataPeripheral is the data frame with RTs for peripheral leds
     dataPeripheral <- data[(data$ledNumber != "4"),];
     
@@ -86,15 +86,15 @@ calculateMeansOfObs <- function(mpath,mfiles){
 # M - Male
 # F - Female
 addGender <- function(dataFrame,gender){
-  dataFrame <- cbind(dataFrame,gender = rep(gender,nrow(dataFrame)));
+  dataFrame <- cbind(dataFrame,GENDER = rep(gender,nrow(dataFrame)));
   return(dataFrame);
 }
 
 ##
 # P - Physical Event
 # V - Virtual Event
-addEvent <- function(dataFrame,event){
-  dataFrame <- cbind(dataFrame,event = rep(event,nrow(dataFrame)));
+addEvent <- function(dataFrame,EVENT){
+  dataFrame <- cbind(dataFrame,EVENT = rep(EVENT,nrow(dataFrame)));
   return(dataFrame);
 }
 
@@ -102,8 +102,8 @@ addEvent <- function(dataFrame,event){
 # NC - No Content
 # VC - Virtual Content
 # VCT - Virtual Content + Task
-addContent <- function(dataFrame,content){
-  dataFrame <- cbind(dataFrame,content = rep(content,nrow(dataFrame)));
+addContent <- function(dataFrame,CONTENT){
+  dataFrame <- cbind(dataFrame,CONTENT = rep(CONTENT,nrow(dataFrame)));
   return(dataFrame);
 }
 
@@ -266,26 +266,45 @@ myData <- rbind(
   meansVirtualAR,
   meansVirtualARTask);
 
+
+##
+# changing data use for plotting 
+# spelled out conditions
+# milliseconds instead of microseconds
+myData[,2:4] <- myData[,2:4]/1000 ;
+
+##spelling out acronyms
+revalue(myData$GENDER, c("M" = "Male")) -> myData$GENDER;
+revalue(myData$GENDER, c("F" = "Female")) -> myData$GENDER;
+
+revalue(myData$EVENT, c("P" = "Physical")) -> myData$EVENT;
+revalue(myData$EVENT, c("V" = "Virtual")) -> myData$EVENT;
+
+revalue(myData$CONTENT, c("NC" = "None")) -> myData$CONTENT;
+revalue(myData$CONTENT, c("VC" = "Virtual")) -> myData$CONTENT;
+revalue(myData$CONTENT, c("VCT" = "Virtual with Task")) -> myData$CONTENT;
+
+
 #########################################
 # summary statistics
 #########################################
-myData %>% group_by(content,event) %>% get_summary_stats(meanRT,type = "mean_sd");
+myData %>% group_by(CONTENT,EVENT) %>% get_summary_stats(meanRT,type = "mean_sd");
 
 #########################################
 # visualizations
 #########################################
 
 bxp <- ggboxplot(
-  myData, x = "content", y = "meanRT",
-  ylab = "RT (seconds)",
-  color = "event", palette = "jco"
+  myData, x = "CONTENT", y = "meanRT",
+  ylab = "RT (milliseconds)",
+  color = "EVENT", palette = "jco"
 );
 bxp;
 
 bxp2 <- ggboxplot(
-  myData, x = "event", y = "meanRT",
-  ylab = "RT (seconds)",
-  color = "content", palette = "jco"
+  myData, x = "EVENT", y = "meanRT",
+  ylab = "RT (milliseconds)",
+  color = "CONTENT", palette = "jco"
 );
 bxp2;
 
@@ -293,30 +312,30 @@ bxp2;
 # Assumptions
 #########################################
 #outlier
-myData %>% group_by(content,event) %>% identify_outliers(meanRT);
+myData %>% group_by(CONTENT,EVENT) %>% identify_outliers(meanRT);
 #shapiro test
-myData %>% group_by(content,event) %>% shapiro_test(meanRT);
+myData %>% group_by(CONTENT,EVENT) %>% shapiro_test(meanRT);
 
-## since the shapiro-wilk test for VCT content for both events are significant
+## since the shapiro-wilk test for VCT CONTENT for both EVENTs are significant
 ## we also test using the ks test
 #kolmogorov-smirnov test
 ks.test(
-  myData[((myData$event == "P") & (myData$content == "VCT")),]$meanRT,
+  myData[((myData$EVENT == "Physical") & (myData$CONTENT == "Virtual with Task")),]$meanRT,
   "pnorm",
-  mean = mean(myData[((myData$event == "P") & (myData$content == "VCT")),]$meanRT),
-  sd = sd(myData[((myData$event == "P") & (myData$content == "VCT")),]$meanRT)
+  mean = mean(myData[((myData$EVENT == "Physical") & (myData$CONTENT == "Virtual with Task")),]$meanRT),
+  sd = sd(myData[((myData$EVENT == "Physical") & (myData$CONTENT == "Virtual with Task")),]$meanRT)
 );
 
 ks.test(
-  myData[((myData$event == "V") & (myData$content == "VCT")),]$meanRT,
+  myData[((myData$EVENT == "Virtual") & (myData$CONTENT == "Virtual with Task")),]$meanRT,
   "pnorm",
-  mean = mean(myData[((myData$event == "V") & (myData$content == "VCT")),]$meanRT),
-  sd = sd(myData[((myData$event == "V") & (myData$content == "VCT")),]$meanRT)
+  mean = mean(myData[((myData$EVENT == "Virtual") & (myData$CONTENT == "Virtual with Task")),]$meanRT),
+  sd = sd(myData[((myData$EVENT == "Virtual") & (myData$CONTENT == "Virtual with Task")),]$meanRT)
 );
 
 #qqplots
 ggqqplot(myData,"meanRT", ggtheme = theme_bw()) + 
-  facet_grid(event ~ content, labeller = "label_both");
+  facet_grid(EVENT ~ CONTENT, labeller = "label_both");
 
 ######################################################
 # REPEATED MEASURE ANOVA (Yatani)
@@ -326,18 +345,18 @@ ggqqplot(myData,"meanRT", ggtheme = theme_bw()) +
 ######################################################
 
 #test homogeneity
-leveneTest(myData$meanRT~myData$event*myData$content);
+leveneTest(myData$meanRT~myData$EVENT*myData$CONTENT);
 
 ## no repeated measure
 options(contrasts = c("contr.sum","contr.poly"));
-Anova(lm(myData$meanRT~myData$event*myData$content),type = "III");
+Anova(lm(myData$meanRT~myData$EVENT*myData$CONTENT),type = "III");
 
 options(contrasts = c("contr.sum","contr.poly"));
-rt.ez <- ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(event,content), type = 3);
+rt.ez <- ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(EVENT,CONTENT), type = 3);
 rt.ez;
 
 #this is the same as the above
-rt.aov <- aov(meanRT ~ content*event + Error(pid/(content*event)), myData);
+rt.aov <- aov(meanRT ~ CONTENT*EVENT + Error(pid/(CONTENT*EVENT)), myData);
 summary(rt.aov);
 
 ######################################################
@@ -346,46 +365,49 @@ summary(rt.aov);
 
 
 #----------------------------------------------------#
-# effect of event on RT (within event)
+# effect of EVENT on RT (within EVENT)
 #----------------------------------------------------#
 
 #using aov
-rt.aov.oneway.contentNC <- aov(meanRT ~ event +Error(pid/event),myData[(myData$content == "NC"),]);
-summary(rt.aov.oneway.contentNC);
-rt.aov.oneway.contentVC <- aov(meanRT ~ event +Error(pid/event),myData[(myData$content == "VC"),]);
-summary(rt.aov.oneway.contentVC);
-rt.aov.oneway.contentVCT <- aov(meanRT ~ event +Error(pid/event),myData[(myData$content == "VCT"),]);
-summary(rt.aov.oneway.contentVCT);
+rt.aov.oneway.CONTENTNC <- aov(meanRT ~ EVENT +Error(pid/EVENT),myData[(myData$CONTENT == "None"),]);
+summary(rt.aov.oneway.CONTENTNC);
+rt.aov.oneway.CONTENTVC <- aov(meanRT ~ EVENT +Error(pid/EVENT),myData[(myData$CONTENT == "Virtual"),]);
+summary(rt.aov.oneway.CONTENTVC);
+rt.aov.oneway.CONTENTVCT <- aov(meanRT ~ EVENT +Error(pid/EVENT),myData[(myData$CONTENT == "Virtual with Task"),]);
+summary(rt.aov.oneway.CONTENTVCT);
 
 #using ez package
-ezANOVA(data = myData[(myData$content == "NC"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
-ezANOVA(data = myData[(myData$content == "VC"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
-ezANOVA(data = myData[(myData$content == "VCT"),], dv = .(meanRT), wid = .(pid), within = .(event), type = 3);
+ezANOVA(data = myData[(myData$CONTENT == "None"),], dv = .(meanRT), wid = .(pid), within = .(EVENT), type = 3);
+ezANOVA(data = myData[(myData$CONTENT == "Virtual"),], dv = .(meanRT), wid = .(pid), within = .(EVENT), type = 3);
+ezANOVA(data = myData[(myData$CONTENT == "Virtual with Task"),], dv = .(meanRT), wid = .(pid), within = .(EVENT), type = 3);
 
-#since event only has 1 degree of freedom, a paiwise t test works
+#since EVENT only has 1 degree of freedom, a paiwise t test works
 pairwise.t.test(
-  myData[(myData$content == "NC"),]$meanRT,
-  myData[(myData$content == "NC"),]$event,
+  myData[(myData$CONTENT == "None"),]$meanRT,
+  myData[(myData$CONTENT == "None"),]$EVENT,
   paired = TRUE, 
   p.adjust.method = "bonf");
 pairwise.t.test(
-  myData[(myData$content == "VC"),]$meanRT,
-  myData[(myData$content == "VC"),]$event,
+  myData[(myData$CONTENT == "Virtual"),]$meanRT,
+  myData[(myData$CONTENT == "Virtual"),]$EVENT,
   paired = TRUE, 
   p.adjust.method = "bonf");
 pairwise.t.test(
-  myData[(myData$content == "VCT"),]$meanRT,
-  myData[(myData$content == "VCT"),]$event,
+  myData[(myData$CONTENT == "Virtual with Task"),]$meanRT,
+  myData[(myData$CONTENT == "Virtual with Task"),]$EVENT,
   paired = TRUE, 
   p.adjust.method = "bonf");
 
 #using rstatix
-pwc <- myData %>% group_by(content) %>% pairwise_t_test(meanRT ~ event, paired = TRUE, p.adjust.method = "bonferroni");
+pwc <- myData %>% group_by(CONTENT) %>% pairwise_t_test(meanRT ~ EVENT, paired = TRUE, p.adjust.method = "bonferroni");
 pwc;
 
 #plotting PWC
-pwc <- pwc %>% add_xy_position(x = "content");
+pwc <- pwc %>% add_xy_position(x = "CONTENT");
 bxp + 
+  font("legend.title", size = 14, face = "bold") +
+  font("xlab", size = 14, face = "bold") +
+  font("ylab", size = 14, face = "bold") +
   color_palette("Dark2") +
   bgcolor("#F5F5F5") +
   grids(linetype = "dashed", color = "white") +
@@ -395,50 +417,53 @@ bxp +
     caption = get_pwc_label(pwc)
   );
 #----------------------------------------------------#
-# effect of content on RT (within content)
+# effect of CONTENT on RT (within CONTENT)
 #----------------------------------------------------#
 
 #using aov
-rt.aov.oneway.eventP<- aov(meanRT ~ content +Error(pid/content),myData[(myData$event == "P"),]);
-summary(rt.aov.oneway.eventP);
-rt.aov.oneway.eventV <- aov(meanRT ~ content +Error(pid/content),myData[(myData$event == "V"),]);
-summary(rt.aov.oneway.eventV);
+rt.aov.oneway.EVENTP<- aov(meanRT ~ CONTENT +Error(pid/CONTENT),myData[(myData$EVENT == "Physical"),]);
+summary(rt.aov.oneway.EVENTP);
+rt.aov.oneway.EVENTV <- aov(meanRT ~ CONTENT +Error(pid/CONTENT),myData[(myData$EVENT == "Virtual"),]);
+summary(rt.aov.oneway.EVENTV);
 
 #using ez
-ezANOVA(data = myData[(myData$event == "P"),], dv = .(meanRT), wid = .(pid), within = .(content), type = 3);
-ezANOVA(data = myData[(myData$event == "V"),], dv = .(meanRT), wid = .(pid), within = .(content), type = 3);
+ezANOVA(data = myData[(myData$EVENT == "P"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3);
+ezANOVA(data = myData[(myData$EVENT == "V"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3);
 
 # Both are significant so we will move on to pairwise t tests
 
 #using pairwiset.tests
 pairwise.t.test(
-  myData[(myData$event == "P"),]$meanRT,
-  myData[(myData$event == "P"),]$content,
+  myData[(myData$EVENT == "Physical"),]$meanRT,
+  myData[(myData$EVENT == "Physical"),]$CONTENT,
   paired =TRUE,
   p.adjust.method = "bonf"
 );
 
 pairwise.t.test(
-  myData[(myData$event == "V"),]$meanRT,
-  myData[(myData$event == "V"),]$content,
+  myData[(myData$EVENT == "Virtual"),]$meanRT,
+  myData[(myData$EVENT == "Virtual"),]$CONTENT,
   paired =TRUE,
   p.adjust.method = "bonf"
 );
 
 #using rstatix
-pwc2 <- myData %>% group_by(event) %>% pairwise_t_test(meanRT ~ content, paired = TRUE, p.adjust.method = "bonferroni");
+pwc2 <- myData %>% group_by(EVENT) %>% pairwise_t_test(meanRT ~ CONTENT, paired = TRUE, p.adjust.method = "bonferroni");
 pwc2;
 
 #plotting PWC2
-pwc2 <- pwc2 %>% add_xy_position(x = "event");
+pwc2 <- pwc2 %>% add_xy_position(x = "EVENT");
 bxp2 +
+  font("legend.title", size = 14, face = "bold") +
+  font("xlab", size = 14, face = "bold") +
+  font("ylab", size = 14, face = "bold") +
   color_palette("Dark2") +
-#  color_palette(c("#FF5A00","#55AAAA", "#0000FF")) +
+  #  color_palette(c("#FF5A00","#55AAAA", "#0000FF")) +
   bgcolor("#F5F5F5") +
   grids(linetype = "dashed", color = "#ECECEC") +
   stat_pvalue_manual(pwc2,tip.length = 0,hide.ns = TRUE) +
   labs(
-#    subtitle = "hello",
+    #    subtitle = "hello",
     caption = get_pwc_label(pwc2)
   );
 
@@ -448,20 +473,20 @@ bxp2 +
 # THIS IS NOT WORKING
 ######################################################
 
-rt.aov <- anova_test(data = myData,dv = meanRT, wid = pid, within = c(content,event));
+rt.aov <- anova_test(data = myData,dv = meanRT, wid = pid, within = c(CONTENT,EVENT));
 get_anova_table(rt.aov);
 
-lm(meanRT~pid+event:content,data = myData);
+lm(meanRT~pid+EVENT:CONTENT,data = myData);
 
 ######################################################
 # TEST
 # Multi-Level Linear Model
 # THIS IS NOT WORKING
 ######################################################
-rt.mlm <- lmer(meanRT ~ event*content + (1|pid), data = myData);
+rt.mlm <- lmer(meanRT ~ EVENT*CONTENT + (1|pid), data = myData);
 anova(rt.mlm);
 
 ##non repeated measure for contrast
-rt.lm <- lm(meanRT ~ event*content,data = myData);
+rt.lm <- lm(meanRT ~ EVENT*CONTENT,data = myData);
 anova(rt.lm);
 
