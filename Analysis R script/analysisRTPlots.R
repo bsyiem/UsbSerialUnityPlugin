@@ -411,7 +411,7 @@ bxp +
   color_palette("Dark2") +
   bgcolor("#F5F5F5") +
   grids(linetype = "dashed", color = "white") +
-  stat_pvalue_manual(pwc,tip.length = 0,hide.ns = TRUE) +
+  stat_pvalue_manual(pwc,label = "p.adj",tip.length = 0,hide.ns = TRUE) +
   labs(
     #    subtitle = "hello",
     caption = get_pwc_label(pwc)
@@ -451,6 +451,9 @@ pairwise.t.test(
 pwc2 <- myData %>% group_by(EVENT) %>% pairwise_t_test(meanRT ~ CONTENT, paired = TRUE, p.adjust.method = "bonferroni");
 pwc2;
 
+# does not work -> does not adjust with bonferroni
+#compare_means(meanRT ~ CONTENT,paired = TRUE,method = "t.test", group.by = "EVENT", data = myData, p.adjust.method = "bonferroni");
+
 #plotting PWC2
 pwc2 <- pwc2 %>% add_xy_position(x = "EVENT");
 bxp2 +
@@ -461,7 +464,7 @@ bxp2 +
   #  color_palette(c("#FF5A00","#55AAAA", "#0000FF")) +
   bgcolor("#F5F5F5") +
   grids(linetype = "dashed", color = "#ECECEC") +
-  stat_pvalue_manual(pwc2,tip.length = 0,hide.ns = TRUE) +
+  stat_pvalue_manual(pwc2,tip.length = 0.01,label = "p.adj", hide.ns = TRUE) +
   labs(
     #    subtitle = "hello",
     caption = get_pwc_label(pwc2)
