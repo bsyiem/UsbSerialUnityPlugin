@@ -443,6 +443,17 @@ bxp2 +
   );
 
 ######################################################
+# central vs peripheral t-test
+######################################################
+
+myDataP <- myData[(myData$event == "P"),];
+myDataP <- gather(myDataP,position, pc_rt,peripheralMeanRT,centralMeanRT,factor_key = TRUE);
+
+myDataP %>% group_by(content,position) %>% get_summary_stats(pc_rt,type = "mean_sd");
+
+pwc3 <- myDataP %>% group_by(content) %>% pairwise_t_test(pc_rt~position , paired = TRUE, p.adjust.method = "bonferroni");
+pwc3;
+######################################################
 # TEST
 # REPEATED MEASURE ANOVA (rstatix)
 # THIS IS NOT WORKING
