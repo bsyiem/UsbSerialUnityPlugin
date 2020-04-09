@@ -405,13 +405,15 @@ pwc;
 #plotting PWC
 pwc <- pwc %>% add_xy_position(x = "CONTENT");
 bxp + 
-  font("legend.title", size = 14, face = "bold") +
-  font("xlab", size = 14, face = "bold") +
-  font("ylab", size = 14, face = "bold") +
+  font("caption", size = 14) +
+  font("xy.text", size = 16) +
+  font("legend.title", size = 18, face = "bold") +
+  font("xlab", size = 18, face = "bold") +
+  font("ylab", size = 18, face = "bold") +
   color_palette("Dark2") +
   bgcolor("#F5F5F5") +
   grids(linetype = "dashed", color = "white") +
-  stat_pvalue_manual(pwc,label = "p.adj",tip.length = 0,hide.ns = TRUE) +
+  stat_pvalue_manual(pwc,label = "p.adj",tip.length = 0.01,hide.ns = TRUE,size = 4.5) +
   labs(
     #    subtitle = "hello",
     caption = get_pwc_label(pwc)
@@ -457,14 +459,16 @@ pwc2;
 #plotting PWC2
 pwc2 <- pwc2 %>% add_xy_position(x = "EVENT");
 bxp2 +
-  font("legend.title", size = 14, face = "bold") +
-  font("xlab", size = 14, face = "bold") +
-  font("ylab", size = 14, face = "bold") +
+  font("caption", size = 14) +
+  font("xy.text", size = 16) +
+  font("legend.title", size = 18, face = "bold") +
+  font("xlab", size = 18, face = "bold") +
+  font("ylab", size = 18, face = "bold") +
   color_palette("Dark2") +
   #  color_palette(c("#FF5A00","#55AAAA", "#0000FF")) +
   bgcolor("#F5F5F5") +
   grids(linetype = "dashed", color = "#ECECEC") +
-  stat_pvalue_manual(pwc2,tip.length = 0.01,label = "p.adj", hide.ns = TRUE) +
+  stat_pvalue_manual(pwc2,tip.length = 0.01,label = "p.adj", hide.ns = TRUE, size = 4.5) +
   labs(
     #    subtitle = "hello",
     caption = get_pwc_label(pwc2)
