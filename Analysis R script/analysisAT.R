@@ -18,7 +18,7 @@ library(dplyr);
 library(tidyr);
 library(data.table);
 
-#library(plyr);
+library(plyr);
 
 #returns the means of each sample concatenated in a list
 ## returns a data fram with

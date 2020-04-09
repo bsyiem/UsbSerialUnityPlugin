@@ -18,7 +18,7 @@ library(dplyr);
 library(tidyr);
 library(data.table);
 
-#library(plyr);
+library(plyr);
 
 #returns the means of each sample concatenated in a list
 ## returns a data fram with
@@ -427,8 +427,8 @@ rt.aov.oneway.EVENTV <- aov(meanRT ~ CONTENT +Error(pid/CONTENT),myData[(myData$
 summary(rt.aov.oneway.EVENTV);
 
 #using ez
-ezANOVA(data = myData[(myData$EVENT == "P"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3);
-ezANOVA(data = myData[(myData$EVENT == "V"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3);
+ezANOVA(data = myData[(myData$EVENT == "Physical"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3);
+ezANOVA(data = myData[(myData$EVENT == "Virtual"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3);
 
 # Both are significant so we will move on to pairwise t tests
 
