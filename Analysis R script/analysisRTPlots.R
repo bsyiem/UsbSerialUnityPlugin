@@ -26,10 +26,14 @@ library(plyr);
 # means of RTs
 # means of RTs for peripheral leds
 # means of RTs for central led.
+# number of false positives
+# number of false negatives
 calculateMeansOfObs <- function(mpath,mfiles){
   meanRT <- c();
   centralMeanRT <- c();
   peripheralMeanRT <- c();
+  false_positives <- c();
+  false_negatives <- c();
   
   participantNumbers <- c();
   for(mfile in mfiles){
@@ -37,6 +41,10 @@ calculateMeansOfObs <- function(mpath,mfiles){
     
     data <- read.csv(mfilePath, header = FALSE);
     colnames(data) <- c("ledNumber", "reactionTime", "reactionType");
+    
+    #get False Negatives
+    false_positives <- c(false_positives,nrow(data[(data$reactionType == 'FP'),]));
+    false_negatives <- c(false_negatives,nrow(data[(data$reactionType == 'FN'),]));
     
     #cleaning all rows with NA or blanks
     data <- data[complete.cases(data),];
@@ -77,7 +85,7 @@ calculateMeansOfObs <- function(mpath,mfiles){
     participantNumbers <- c(participantNumbers,as.character(p_id));
   }
   
-  meanParticipantReaction<- data.frame(pid = as.factor(participantNumbers), meanRT, peripheralMeanRT, centralMeanRT, stringsAsFactors = FALSE);
+  meanParticipantReaction<- data.frame(pid = as.factor(participantNumbers), meanRT, peripheralMeanRT, centralMeanRT, false_positives, false_negatives,  stringsAsFactors = FALSE);
   return(meanParticipantReaction);
 }
 
@@ -288,8 +296,16 @@ revalue(myData$CONTENT, c("VCT" = "Virtual with Task")) -> myData$CONTENT;
 #########################################
 # summary statistics
 #########################################
-myData %>% group_by(CONTENT,EVENT) %>% get_summary_stats(meanRT,type = "mean_sd");
+reactionTime_summary <- myData %>% group_by(CONTENT,EVENT) %>% get_summary_stats(meanRT,type = "mean_sd");
+reactionTime_summary;
 
+#FN
+false_negative_summary <- myData %>% group_by(CONTENT,EVENT) %>% get_summary_stats(false_negatives,type = "mean_sd");
+false_negative_summary;
+
+#FP
+false_positive_summary <- myData %>% group_by(CONTENT,EVENT) %>% get_summary_stats(false_positives,type = "mean_sd");
+false_positive_summary;
 #########################################
 # visualizations
 #########################################
@@ -307,6 +323,31 @@ bxp2 <- ggboxplot(
   color = "CONTENT", palette = "jco"
 );
 bxp2;
+
+#bar_plot
+p <- ggplot(reactionTime_summary, aes(x = CONTENT, y = mean, fill = EVENT)) +
+  font("caption", size = 14) +
+  font("xy.text", size = 16) +
+  font("legend.title", size = 18, face = "bold") +
+  font("legend.text",size = 16) +
+  font("xlab", size = 18, face = "bold") +
+  font("ylab", size = 18, face = "bold") +
+  ylab("RT (milliseconds)") +
+  geom_bar(
+    stat = "identity",
+    position = position_dodge(),
+    color = "black",
+    width = 0.4
+  ) +
+  geom_errorbar(
+    aes(
+      ymin = mean-sd,
+      ymax=mean+sd
+      ),
+    width = 0.2,
+    position = position_dodge(0.4)
+  );
+p;
 
 #########################################
 # Assumptions
@@ -359,6 +400,16 @@ rt.ez;
 rt.aov <- aov(meanRT ~ CONTENT*EVENT + Error(pid/(CONTENT*EVENT)), myData);
 summary(rt.aov);
 
+#FN
+options(contrasts = c("contr.sum","contr.poly"));
+fn.ez <- ezANOVA(data = myData,dv = .(false_negatives), wid = .(pid), within = .(EVENT,CONTENT), type = 3);
+fn.ez;
+
+#FP
+options(contrasts = c("contr.sum","contr.poly"));
+fp.ez <- ezANOVA(data = myData,dv = .(false_positives), wid = .(pid), within = .(EVENT,CONTENT), type = 3);
+fp.ez;
+
 ######################################################
 # Post Hoc Analysis
 ######################################################
@@ -408,6 +459,7 @@ bxp +
   font("caption", size = 14) +
   font("xy.text", size = 16) +
   font("legend.title", size = 18, face = "bold") +
+  font("legend.text",size = 16) +
   font("xlab", size = 18, face = "bold") +
   font("ylab", size = 18, face = "bold") +
   color_palette("Dark2") +
@@ -418,6 +470,14 @@ bxp +
     #    subtitle = "hello",
     caption = get_pwc_label(pwc)
   );
+
+###pwc of FP and FN
+pwcFN <- myData %>% group_by(CONTENT) %>% pairwise_t_test(false_negatives ~ EVENT, paired = TRUE, p.adjust.method = "bonferroni");
+pwcFN; 
+
+pwcFP <- myData %>% group_by(CONTENT) %>% pairwise_t_test(false_positives ~ EVENT, paired = TRUE, p.adjust.method = "bonferroni");
+pwcFP;
+
 #----------------------------------------------------#
 # effect of CONTENT on RT (within CONTENT)
 #----------------------------------------------------#
@@ -462,6 +522,7 @@ bxp2 +
   font("caption", size = 14) +
   font("xy.text", size = 16) +
   font("legend.title", size = 18, face = "bold") +
+  font("legend.text",size = 16) +
   font("xlab", size = 18, face = "bold") +
   font("ylab", size = 18, face = "bold") +
   color_palette("Dark2") +
@@ -473,6 +534,13 @@ bxp2 +
     #    subtitle = "hello",
     caption = get_pwc_label(pwc2)
   );
+
+##pwc of FP and FN
+pwc2FN <- myData %>% group_by(EVENT) %>% pairwise_t_test(false_negatives ~ CONTENT, paired = TRUE, p.adjust.method = "bonferroni");
+pwc2FN;
+
+pwc2FP <- myData %>% group_by(EVENT) %>% pairwise_t_test(false_positives ~ CONTENT, paired = TRUE, p.adjust.method = "bonferroni");
+pwc2FP;
 
 ######################################################
 # TEST
