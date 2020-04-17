@@ -29,6 +29,8 @@ library(plyr);
 # number of false positives
 # number of false negatives
 calculateMeansOfObs <- function(mpath,mfiles){
+  #number_of_events = 25;
+  
   meanRT <- c();
   centralMeanRT <- c();
   peripheralMeanRT <- c();
@@ -42,9 +44,14 @@ calculateMeansOfObs <- function(mpath,mfiles){
     data <- read.csv(mfilePath, header = FALSE);
     colnames(data) <- c("ledNumber", "reactionTime", "reactionType");
     
+    #get False Negatives ratio (for 25 events)
+    #false_positives <- c(false_positives,(nrow(data[(data$reactionType == 'FP'),]))/number_of_events);
+    #false_negatives <- c(false_negatives,(nrow(data[(data$reactionType == 'FN'),]))/number_of_events);
+    
     #get False Negatives
     false_positives <- c(false_positives,nrow(data[(data$reactionType == 'FP'),]));
     false_negatives <- c(false_negatives,nrow(data[(data$reactionType == 'FN'),]));
+    
     
     #cleaning all rows with NA or blanks
     data <- data[complete.cases(data),];
@@ -287,6 +294,7 @@ false_negative_summary;
 #FP
 false_positive_summary <- myData %>% group_by(content,event) %>% get_summary_stats(false_positives,type = "mean_sd");
 false_positive_summary;
+
 #########################################
 # visualizations
 #########################################
@@ -305,7 +313,7 @@ bxp2 <- ggboxplot(
 );
 bxp2;
 
-#bar_plot
+#bar_plot reaction times
 p <- ggplot(reactionTime_summary, aes(x = content, y = mean, fill = event)) +
   ylab("RT (milliseconds)") +
   geom_bar(
@@ -375,20 +383,9 @@ rt.ez;
 rt.aov <- aov(meanRT ~ content*event + Error(pid/(content*event)), myData);
 summary(rt.aov);
 
-#FN
-options(contrasts = c("contr.sum","contr.poly"));
-fn.ez <- ezANOVA(data = myData,dv = .(false_negatives), wid = .(pid), within = .(event,content), type = 3);
-fn.ez;
-
-#FP
-options(contrasts = c("contr.sum","contr.poly"));
-fp.ez <- ezANOVA(data = myData,dv = .(false_positives), wid = .(pid), within = .(event,content), type = 3);
-fp.ez;
-
 ######################################################
 # Post Hoc Analysis
 ######################################################
-
 
 #----------------------------------------------------#
 # effect of event on RT (within event)
@@ -440,14 +437,6 @@ bxp +
     caption = get_pwc_label(pwc)
   );
 
-###pwc of FP and FN
-pwcFN <- myData %>% group_by(content) %>% pairwise_t_test(false_negatives ~ event, paired = TRUE, p.adjust.method = "bonferroni");
-pwcFN; 
-
-pwcFP <- myData %>% group_by(content) %>% pairwise_t_test(false_positives ~ event, paired = TRUE, p.adjust.method = "bonferroni");
-pwcFP;
-
-
 #----------------------------------------------------#
 # effect of content on RT (within content)
 #----------------------------------------------------#
@@ -496,13 +485,6 @@ bxp2 +
     caption = get_pwc_label(pwc2)
   );
 
-##pwc of FP and FN
-pwc2FN <- myData %>% group_by(event) %>% pairwise_t_test(false_negatives ~ content, paired = TRUE, p.adjust.method = "bonferroni");
-pwc2FN; 
-
-pwc2FP <- myData %>% group_by(event) %>% pairwise_t_test(false_positives ~ content, paired = TRUE, p.adjust.method = "bonferroni");
-pwc2FP;
-
 ######################################################
 # central vs peripheral t-test
 ######################################################
@@ -536,4 +518,96 @@ anova(rt.mlm);
 ##non repeated measure for contrast
 rt.lm <- lm(meanRT ~ event*content,data = myData);
 anova(rt.lm);
+
+##################################################################################################################################################################
+# FALSE NEGATIVES - MISSED EVENTS
+#########################################
+# Assumptions
+#########################################
+#outlier
+myData %>% group_by(content,event) %>% identify_outliers(false_negatives);
+#shapiro test
+myData %>% group_by(content,event) %>% shapiro_test(false_negatives);
+
+#qqplots
+ggqqplot(myData,"false_negatives", ggtheme = theme_bw()) + 
+  facet_grid(event ~ content, labeller = "label_both");
+
+hist(myData[(myData$event == "P") & (myData$content == "NC"),]$false_negatives);
+hist(myData[(myData$event == "P") & (myData$content == "VC"),]$false_negatives);
+hist(myData[(myData$event == "P") & (myData$content == "VCT"),]$false_negatives);
+hist(myData[(myData$event == "V") & (myData$content == "NC"),]$false_negatives);
+hist(myData[(myData$event == "V") & (myData$content == "VC"),]$false_negatives);
+hist(myData[(myData$event == "V") & (myData$content == "VCT"),]$false_negatives);
+
+###########################
+# Cannot assume normality 
+# follow with friedman tests
+# since friendman can only compare data across one factor, we will run it twice over EVENT and CONTENT
+
+myDataFN <- subset(myData, select = -c(peripheralMeanRT,centralMeanRT,meanRT, gender, false_positives));
+
+# effect of  EVENT on false_negatives
+myDataFN_by_event <- spread(myDataFN,event,false_negatives);
+
+myDataFN_by_event_matrix <- as.matrix(subset(myDataFN_by_event, select = -c(pid,content)));
+
+friedman.test(myDataFN_by_event_matrix);
+#friedman.test(false_negatives~event | content, data = myData);
+
+# effect of CONTENT on false_negatives
+myDataFN_by_content <- spread(myDataFN,content,false_negatives);
+
+myDataFN_by_content_matrix <- as.matrix(subset(myDataFN_by_content, select = -c(pid,event)));
+
+friedman.test(myDataFN_by_content_matrix);
+
+##################################################
+# takes each condition as a group.
+# will not account for varibility within factors
+# should not be considered.
+###################################################
+
+#BY CONDITION i.e., all 6 conditions
+# separating data by each participant
+# treating each condition as a group level i.e., 6 levels
+myDataFN_by_participant <- pivot_wider(
+                            data = myDataFN,
+                            id_cols = pid,
+                            names_from = c(event,content),
+                            values_from = false_negatives);
+
+#removing pids for conversion to matrix for friedman test.
+myDataFN_matrix <- as.matrix(subset(myDataFN_by_participant, select = -c(pid)));
+
+friedman.test(myDataFN_matrix);
+
+## 
+
+#since we found significant effect of event on FN via the friedman test
+#we follow up with a wilcox test. 
+#(this should give similar results to friedman).
+
+pairwise.wilcox.test(myData$false_negatives,myData$event, p.adj = "bonferroni", exact = F, paired = T);
+
+
+########################
+# Attempted Data Transformation
+
+myDataFN$false_negatives <- sqrt(myDataFN$false_negatives + 0.5);
+
+myDataFN
+
+hist(myDataFN[(myDataFN$event == "P") & (myDataFN$content == "NC"),]$false_negatives);
+hist(myDataFN[(myDataFN$event == "P") & (myDataFN$content == "VC"),]$false_negatives);
+hist(myDataFN[(myDataFN$event == "P") & (myDataFN$content == "VCT"),]$false_negatives);
+hist(myDataFN[(myDataFN$event == "V") & (myDataFN$content == "NC"),]$false_negatives);
+hist(myDataFN[(myDataFN$event == "V") & (myDataFN$content == "VC"),]$false_negatives);
+hist(myDataFN[(myDataFN$event == "V") & (myDataFN$content == "VCT"),]$false_negatives);
+
+options(contrasts = c("contr.sum","contr.poly"));
+rt.ez <- ezANOVA(data = myDataFN,dv = .(false_negatives), wid = .(pid), within = .(event,content), type = 3);
+rt.ez;
+
+
 
