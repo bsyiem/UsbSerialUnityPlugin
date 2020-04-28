@@ -101,15 +101,15 @@ addGender <- function(dataFrame,GENDER){
 ##
 # P - Physical Event
 # V - Virtual Event
-addEvent <- function(dataFrame,EVENT){
-  dataFrame <- cbind(dataFrame,EVENT = rep(EVENT,nrow(dataFrame)));
+addEvent <- function(dataFrame,EVENT_TYPE){
+  dataFrame <- cbind(dataFrame,EVENT_TYPE = rep(EVENT_TYPE,nrow(dataFrame)));
   return(dataFrame);
 }
 
 ##
-# NC - No Content
-# VC - Virtual Content
-# VCT - Virtual Content + Task
+# NC - No Blocks
+# VC - Virtual Blocks
+# VCT - Virtual Blocks + Task
 addContent <- function(dataFrame,CONTENT){
   dataFrame <- cbind(dataFrame,CONTENT = rep(CONTENT,nrow(dataFrame)));
   return(dataFrame);
@@ -133,7 +133,7 @@ addAge <- function(mdata){
 #add actual and participant ball pass counts
 addCount <- function(mdata){
   pid_for_count <- as.factor(rep(c(1:13,15:21),each = 2));
-  EVENT <- as.factor(rep(c("P","V"),times = 20));
+  EVENT_TYPE <- as.factor(rep(c("P","V"),times = 20));
   CONTENT <- as.factor(rep("VCT",times = 40));
   actual_count <- c(65,62,
                     65,56,
@@ -175,9 +175,9 @@ addCount <- function(mdata){
                          65,60,
                          72,70,
                          59,64);
-  count.df <- data.frame(pid = pid_for_count,EVENT, CONTENT, participant_count,actual_count);
+  count.df <- data.frame(pid = pid_for_count,EVENT_TYPE, CONTENT, participant_count,actual_count);
   
-  mdata <- inner_join(mdata,count.df,by = c("pid","EVENT","CONTENT"), keep = F);
+  mdata <- inner_join(mdata,count.df,by = c("pid","EVENT_TYPE","CONTENT"), keep = F);
   return(mdata);
 }
 
@@ -361,26 +361,26 @@ myData[,2:4] <- myData[,2:4]/1000 ;
 revalue(myData$GENDER, c("M" = "Male")) -> myData$GENDER;
 revalue(myData$GENDER, c("F" = "Female")) -> myData$GENDER;
 
-revalue(myData$EVENT, c("P" = "Physical")) -> myData$EVENT;
-revalue(myData$EVENT, c("V" = "Rendered")) -> myData$EVENT;
+revalue(myData$EVENT_TYPE, c("P" = "Physical")) -> myData$EVENT_TYPE;
+revalue(myData$EVENT_TYPE, c("V" = "Virtual")) -> myData$EVENT_TYPE;
 
 revalue(myData$CONTENT, c("NC" = "None")) -> myData$CONTENT;
-revalue(myData$CONTENT, c("VC" = "Virtual")) -> myData$CONTENT;
-revalue(myData$CONTENT, c("VCT" = "Virtual with Task")) -> myData$CONTENT;
+revalue(myData$CONTENT, c("VC" = "Blocks")) -> myData$CONTENT;
+revalue(myData$CONTENT, c("VCT" = "Blocks + Task")) -> myData$CONTENT;
 
 
 #########################################
 # summary statistics
 #########################################
-reactionTime_summary <- myData %>% group_by(CONTENT,EVENT) %>% get_summary_stats(meanRT,type = "mean_sd");
+reactionTime_summary <- myData %>% group_by(CONTENT,EVENT_TYPE) %>% get_summary_stats(meanRT,type = "mean_sd");
 reactionTime_summary;
 
 #FN
-false_negative_summary <- myData %>% group_by(CONTENT,EVENT) %>% get_summary_stats(false_negatives,type = "mean_sd");
+false_negative_summary <- myData %>% group_by(CONTENT,EVENT_TYPE) %>% get_summary_stats(false_negatives,type = "mean_sd");
 false_negative_summary;
 
 #FP
-false_positive_summary <- myData %>% group_by(CONTENT,EVENT) %>% get_summary_stats(false_positives,type = "mean_sd");
+false_positive_summary <- myData %>% group_by(CONTENT,EVENT_TYPE) %>% get_summary_stats(false_positives,type = "mean_sd");
 false_positive_summary;
 
 #Age
@@ -388,7 +388,7 @@ myData %>% distinct(pid,age) %>% subset(select = "age") %>% get_summary_stats();
 
 #count error
 counts <- myDataCount %>% 
-  distinct(pid,EVENT,CONTENT,actual_count,participant_count);
+  distinct(pid,EVENT_TYPE,CONTENT,actual_count,participant_count);
 counts$countError <- counts$actual_count - counts$participant_count;
 
 get_summary_stats(counts);
@@ -401,13 +401,13 @@ bxp <- ggboxplot(
   myData, x = "CONTENT", y = "meanRT",
   ylab = "RT (milliseconds)",
   color = "black",
-  fill = "EVENT",
+  fill = "EVENT_TYPE",
   palette = "jco"
 );
 bxp;
 
 bxp2 <- ggboxplot(
-  myData, x = "EVENT", y = "meanRT",
+  myData, x = "EVENT_TYPE", y = "meanRT",
   ylab = "RT (milliseconds)",
   color = "black",
   fill = "CONTENT",
@@ -417,7 +417,7 @@ bxp2;
 
 
 #bar_plot reaction times
-p <- ggplot(reactionTime_summary, aes(x = CONTENT, y = mean, fill = EVENT)) +
+p <- ggplot(reactionTime_summary, aes(x = CONTENT, y = mean, fill = EVENT_TYPE)) +
   theme_minimal() +
   font("caption", size = 14) +
   font("xy.text", size = 16) +
@@ -451,30 +451,30 @@ p;
 # Assumptions
 #########################################
 #outlier
-myData %>% group_by(CONTENT,EVENT) %>% identify_outliers(meanRT);
+myData %>% group_by(CONTENT,EVENT_TYPE) %>% identify_outliers(meanRT);
 #shapiro test
-myData %>% group_by(CONTENT,EVENT) %>% shapiro_test(meanRT);
+myData %>% group_by(CONTENT,EVENT_TYPE) %>% shapiro_test(meanRT);
 
-## since the shapiro-wilk test for VCT CONTENT for both EVENTs are significant
+## since the shapiro-wilk test for VCT CONTENT for both EVENT_TYPEs are significant
 ## we also test using the ks test
 #kolmogorov-smirnov test
 ks.test(
-  myData[((myData$EVENT == "Physical") & (myData$CONTENT == "Virtual with Task")),]$meanRT,
+  myData[((myData$EVENT_TYPE == "Physical") & (myData$CONTENT == "Blocks + Task")),]$meanRT,
   "pnorm",
-  mean = mean(myData[((myData$EVENT == "Physical") & (myData$CONTENT == "Virtual with Task")),]$meanRT),
-  sd = sd(myData[((myData$EVENT == "Physical") & (myData$CONTENT == "Virtual with Task")),]$meanRT)
+  mean = mean(myData[((myData$EVENT_TYPE == "Physical") & (myData$CONTENT == "Blocks + Task")),]$meanRT),
+  sd = sd(myData[((myData$EVENT_TYPE == "Physical") & (myData$CONTENT == "Blocks + Task")),]$meanRT)
 );
 
 ks.test(
-  myData[((myData$EVENT == "Rendered") & (myData$CONTENT == "Virtual with Task")),]$meanRT,
+  myData[((myData$EVENT_TYPE == "Virtual") & (myData$CONTENT == "Blocks + Task")),]$meanRT,
   "pnorm",
-  mean = mean(myData[((myData$EVENT == "Rendered") & (myData$CONTENT == "Virtual with Task")),]$meanRT),
-  sd = sd(myData[((myData$EVENT == "Rendered") & (myData$CONTENT == "Virtual with Task")),]$meanRT)
+  mean = mean(myData[((myData$EVENT_TYPE == "Virtual") & (myData$CONTENT == "Blocks + Task")),]$meanRT),
+  sd = sd(myData[((myData$EVENT_TYPE == "Virtual") & (myData$CONTENT == "Blocks + Task")),]$meanRT)
 );
 
 #qqplots
 ggqqplot(myData,"meanRT", ggtheme = theme_bw()) + 
-  facet_grid(EVENT ~ CONTENT, labeller = "label_both");
+  facet_grid(EVENT_TYPE ~ CONTENT, labeller = "label_both");
 
 ######################################################
 # REPEATED MEASURE ANOVA (Yatani)
@@ -484,21 +484,21 @@ ggqqplot(myData,"meanRT", ggtheme = theme_bw()) +
 ######################################################
 
 #test homogeneity
-leveneTest(myData$meanRT~myData$EVENT*myData$CONTENT);
+leveneTest(myData$meanRT~myData$EVENT_TYPE*myData$CONTENT);
 
 ## no repeated measure
 options(contrasts = c("contr.sum","contr.poly"));
-Anova(lm(myData$meanRT~myData$EVENT*myData$CONTENT),type = "III");
+Anova(lm(myData$meanRT~myData$EVENT_TYPE*myData$CONTENT),type = "III");
 
 options(contrasts = c("contr.sum","contr.poly"));
-rt.ez <- ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(EVENT,CONTENT), type = 3, detailed = T);
+rt.ez <- ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(EVENT_TYPE,CONTENT), type = 3, detailed = T);
 rt.ez;
 
 #calculate effect sizes
 rt.ez$ANOVA$SSn/(rt.ez$ANOVA$SSn+rt.ez$ANOVA$SSd);
 
 #this is the same as the above
-rt.aov <- aov(meanRT ~ CONTENT*EVENT + Error(pid/(CONTENT*EVENT)), myData);
+rt.aov <- aov(meanRT ~ CONTENT*EVENT_TYPE + Error(pid/(CONTENT*EVENT_TYPE)), myData);
 summary(rt.aov);
 
 ######################################################
@@ -507,53 +507,53 @@ summary(rt.aov);
 
 
 #----------------------------------------------------#
-# effect of EVENT on RT (within EVENT)
+# effect of EVENT_TYPE on RT (within EVENT_TYPE)
 #----------------------------------------------------#
 
 #using aov
-rt.aov.oneway.CONTENTNC <- aov(meanRT ~ EVENT +Error(pid/EVENT),myData[(myData$CONTENT == "None"),]);
+rt.aov.oneway.CONTENTNC <- aov(meanRT ~ EVENT_TYPE +Error(pid/EVENT_TYPE),myData[(myData$CONTENT == "None"),]);
 summary(rt.aov.oneway.CONTENTNC);
-rt.aov.oneway.CONTENTVC <- aov(meanRT ~ EVENT +Error(pid/EVENT),myData[(myData$CONTENT == "Virtual"),]);
+rt.aov.oneway.CONTENTVC <- aov(meanRT ~ EVENT_TYPE +Error(pid/EVENT_TYPE),myData[(myData$CONTENT == "Blocks"),]);
 summary(rt.aov.oneway.CONTENTVC);
-rt.aov.oneway.CONTENTVCT <- aov(meanRT ~ EVENT +Error(pid/EVENT),myData[(myData$CONTENT == "Virtual with Task"),]);
+rt.aov.oneway.CONTENTVCT <- aov(meanRT ~ EVENT_TYPE +Error(pid/EVENT_TYPE),myData[(myData$CONTENT == "Blocks + Task"),]);
 summary(rt.aov.oneway.CONTENTVCT);
 
 #using ez package
-ez.nc <- ezANOVA(data = myData[(myData$CONTENT == "None"),], dv = .(meanRT), wid = .(pid), within = .(EVENT), type = 3, detailed = T);
+ez.nc <- ezANOVA(data = myData[(myData$CONTENT == "None"),], dv = .(meanRT), wid = .(pid), within = .(EVENT_TYPE), type = 3, detailed = T);
 ez.nc;
 ez.nc$ANOVA$SSn/(ez.nc$ANOVA$SSn+ez.nc$ANOVA$SSd);
 
-ez.vc <- ezANOVA(data = myData[(myData$CONTENT == "Virtual"),], dv = .(meanRT), wid = .(pid), within = .(EVENT), type = 3, detailed = T);
+ez.vc <- ezANOVA(data = myData[(myData$CONTENT == "Blocks"),], dv = .(meanRT), wid = .(pid), within = .(EVENT_TYPE), type = 3, detailed = T);
 ez.vc;
 ez.vc$ANOVA$SSn/(ez.vc$ANOVA$SSn+ez.vc$ANOVA$SSd);
 
-ez.vct <- ANOVA(data = myData[(myData$CONTENT == "Virtual with Task"),], dv = .(meanRT), wid = .(pid), within = .(EVENT), type = 3, detailed = T);
+ez.vct <- ezANOVA(data = myData[(myData$CONTENT == "Blocks + Task"),], dv = .(meanRT), wid = .(pid), within = .(EVENT_TYPE), type = 3, detailed = T);
 ez.vct;
 ez.vct$ANOVA$SSn/(ez.vct$ANOVA$SSn+ez.vct$ANOVA$SSd);
 
-#since EVENT only has 1 degree of freedom, a paiwise t test works
+#since EVENT_TYPE only has 1 degree of freedom, a paiwise t test works
 pairwise.t.test(
   myData[(myData$CONTENT == "None"),]$meanRT,
-  myData[(myData$CONTENT == "None"),]$EVENT,
+  myData[(myData$CONTENT == "None"),]$EVENT_TYPE,
   paired = TRUE, 
   p.adjust.method = "bonf");
 pairwise.t.test(
-  myData[(myData$CONTENT == "Virtual"),]$meanRT,
-  myData[(myData$CONTENT == "Virtual"),]$EVENT,
+  myData[(myData$CONTENT == "Blocks"),]$meanRT,
+  myData[(myData$CONTENT == "Blocks"),]$EVENT_TYPE,
   paired = TRUE, 
   p.adjust.method = "bonf");
 pairwise.t.test(
-  myData[(myData$CONTENT == "Virtual with Task"),]$meanRT,
-  myData[(myData$CONTENT == "Virtual with Task"),]$EVENT,
+  myData[(myData$CONTENT == "Blocks + Task"),]$meanRT,
+  myData[(myData$CONTENT == "Blocks + Task"),]$EVENT_TYPE,
   paired = TRUE, 
   p.adjust.method = "bonf");
 
 #using rstatix
-pwc <- myData %>% group_by(CONTENT) %>% pairwise_t_test(meanRT ~ EVENT, paired = TRUE, p.adjust.method = "bonferroni");
+pwc <- myData %>% group_by(CONTENT) %>% pairwise_t_test(meanRT ~ EVENT_TYPE, paired = TRUE, p.adjust.method = "bonferroni");
 pwc;
 
 #cohens d effect size
-myData %>% group_by(CONTENT) %>% cohens_d(meanRT~EVENT,paired = T)
+myData %>% group_by(CONTENT) %>% cohens_d(meanRT~EVENT_TYPE,paired = T)
 
 #plotting PWC
 pwc <- pwc %>% add_xy_position(x = "CONTENT");
@@ -580,17 +580,17 @@ bxp +
 #----------------------------------------------------#
 
 #using aov
-rt.aov.oneway.EVENTP<- aov(meanRT ~ CONTENT +Error(pid/CONTENT),myData[(myData$EVENT == "Physical"),]);
-summary(rt.aov.oneway.EVENTP);
-rt.aov.oneway.EVENTV <- aov(meanRT ~ CONTENT +Error(pid/CONTENT),myData[(myData$EVENT == "Virtual"),]);
-summary(rt.aov.oneway.EVENTV);
+rt.aov.oneway.EVENT_TYPEP<- aov(meanRT ~ CONTENT +Error(pid/CONTENT),myData[(myData$EVENT_TYPE == "Physical"),]);
+summary(rt.aov.oneway.EVENT_TYPEP);
+rt.aov.oneway.EVENT_TYPEV <- aov(meanRT ~ CONTENT +Error(pid/CONTENT),myData[(myData$EVENT_TYPE == "Virtual"),]);
+summary(rt.aov.oneway.EVENT_TYPEV);
 
 #using ez
-ez.p <- ezANOVA(data = myData[(myData$EVENT == "Physical"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3, detailed = T);
+ez.p <- ezANOVA(data = myData[(myData$EVENT_TYPE == "Physical"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3, detailed = T);
 ez.p;
 ez.p$ANOVA$SSn/(ez.p$ANOVA$SSn+ez.p$ANOVA$SSd);
 
-ez.r <- ezANOVA(data = myData[(myData$EVENT == "Rendered"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3, detailed = T);
+ez.r <- ezANOVA(data = myData[(myData$EVENT_TYPE == "Virtual"),], dv = .(meanRT), wid = .(pid), within = .(CONTENT), type = 3, detailed = T);
 ez.r;
 ez.r$ANOVA$SSn/(ez.r$ANOVA$SSn+ez.r$ANOVA$SSd);
 
@@ -598,31 +598,31 @@ ez.r$ANOVA$SSn/(ez.r$ANOVA$SSn+ez.r$ANOVA$SSd);
 
 #using pairwiset.tests
 pairwise.t.test(
-  myData[(myData$EVENT == "Physical"),]$meanRT,
-  myData[(myData$EVENT == "Physical"),]$CONTENT,
+  myData[(myData$EVENT_TYPE == "Physical"),]$meanRT,
+  myData[(myData$EVENT_TYPE == "Physical"),]$CONTENT,
   paired =TRUE,
   p.adjust.method = "bonf"
 );
 
 pairwise.t.test(
-  myData[(myData$EVENT == "Rendered"),]$meanRT,
-  myData[(myData$EVENT == "Rendered"),]$CONTENT,
+  myData[(myData$EVENT_TYPE == "Virtual"),]$meanRT,
+  myData[(myData$EVENT_TYPE == "Virtual"),]$CONTENT,
   paired =TRUE,
   p.adjust.method = "bonf"
 );
 
 #using rstatix
-pwc2 <- myData %>% group_by(EVENT) %>% pairwise_t_test(meanRT ~ CONTENT, paired = TRUE, p.adjust.method = "bonferroni");
+pwc2 <- myData %>% group_by(EVENT_TYPE) %>% pairwise_t_test(meanRT ~ CONTENT, paired = TRUE, p.adjust.method = "bonferroni");
 pwc2;
 
 #cohens d effect size
-myData %>% group_by(EVENT) %>% cohens_d(meanRT~CONTENT,paired = T)
+myData %>% group_by(EVENT_TYPE) %>% cohens_d(meanRT~CONTENT,paired = T)
 
 # does not work -> does not adjust with bonferroni
-#compare_means(meanRT ~ CONTENT,paired = TRUE,method = "t.test", group.by = "EVENT", data = myData, p.adjust.method = "bonferroni");
+#compare_means(meanRT ~ CONTENT,paired = TRUE,method = "t.test", group.by = "EVENT_TYPE", data = myData, p.adjust.method = "bonferroni");
 
 #plotting PWC2
-pwc2 <- pwc2 %>% add_xy_position(x = "EVENT");
+pwc2 <- pwc2 %>% add_xy_position(x = "EVENT_TYPE");
 
 # <- pwc2 %>% p_format(p.adj, accuracy = 0.0001);
 
@@ -650,56 +650,56 @@ bxp2 +
 # THIS IS NOT WORKING
 ######################################################
 
-rt.aov <- anova_test(data = myData,dv = meanRT, wid = pid, within = c(CONTENT,EVENT));
+rt.aov <- anova_test(data = myData,dv = meanRT, wid = pid, within = c(CONTENT,EVENT_TYPE));
 get_anova_table(rt.aov);
 
-lm(meanRT~pid+EVENT:CONTENT,data = myData);
+lm(meanRT~pid+EVENT_TYPE:CONTENT,data = myData);
 
 ######################################################
 # TEST
 # Multi-Level Linear Model
 # THIS IS NOT WORKING
 ######################################################
-rt.mlm <- lmer(meanRT ~ EVENT*CONTENT + (1|pid), data = myData);
+rt.mlm <- lmer(meanRT ~ EVENT_TYPE*CONTENT + (1|pid), data = myData);
 anova(rt.mlm);
 
 ##non repeated measure for contrast
-rt.lm <- lm(meanRT ~ EVENT*CONTENT,data = myData);
+rt.lm <- lm(meanRT ~ EVENT_TYPE*CONTENT,data = myData);
 anova(rt.lm);
 
 ##################################################################################################################################################################
-# FALSE NEGATIVES - MISSED EVENTS
+# FALSE NEGATIVES - MISSED EVENT_TYPES
 #########################################
 # Assumptions
 #########################################
 #outlier
-myData %>% group_by(CONTENT,EVENT) %>% identify_outliers(false_negatives);
+myData %>% group_by(CONTENT,EVENT_TYPE) %>% identify_outliers(false_negatives);
 #shapiro test
-myData %>% group_by(CONTENT,EVENT) %>% shapiro_test(false_negatives);
+myData %>% group_by(CONTENT,EVENT_TYPE) %>% shapiro_test(false_negatives);
 
 #qqplots
 ggqqplot(myData,"false_negatives", ggtheme = theme_bw()) + 
-  facet_grid(EVENT ~ CONTENT, labeller = "label_both");
+  facet_grid(EVENT_TYPE ~ CONTENT, labeller = "label_both");
 
 ###########################
 # Cannot assume normality 
 # follow with friedman tests
-# since friendman can only compare data across one factor, we will run it twice over EVENT and CONTENT
+# since friendman can only compare data across one factor, we will run it twice over EVENT_TYPE and CONTENT
 
 myDataFN <- subset(myData, select = -c(peripheralMeanRT,centralMeanRT,meanRT, GENDER, false_positives));
 
-# effect of  EVENT on false_negatives
-myDataFN_by_EVENT <- spread(myDataFN,EVENT,false_negatives);
+# effect of  EVENT_TYPE on false_negatives
+myDataFN_by_EVENT_TYPE <- spread(myDataFN,EVENT_TYPE,false_negatives);
 
-myDataFN_by_EVENT_matrix <- as.matrix(subset(myDataFN_by_EVENT, select = -c(pid,CONTENT)));
+myDataFN_by_EVENT_TYPE_matrix <- as.matrix(subset(myDataFN_by_EVENT_TYPE, select = -c(pid,CONTENT)));
 
-friedman.test(myDataFN_by_EVENT_matrix);
-#friedman.test(false_negatives~EVENT | CONTENT, data = myData);
+friedman.test(myDataFN_by_EVENT_TYPE_matrix);
+#friedman.test(false_negatives~EVENT_TYPE | CONTENT, data = myData);
 
 # effect of CONTENT on false_negatives
 myDataFN_by_CONTENT <- spread(myDataFN,CONTENT,false_negatives);
 
-myDataFN_by_CONTENT_matrix <- as.matrix(subset(myDataFN_by_CONTENT, select = -c(pid,EVENT)));
+myDataFN_by_CONTENT_matrix <- as.matrix(subset(myDataFN_by_CONTENT, select = -c(pid,EVENT_TYPE)));
 
 friedman.test(myDataFN_by_CONTENT_matrix);
 
@@ -715,7 +715,7 @@ friedman.test(myDataFN_by_CONTENT_matrix);
 myDataFN_by_participant <- pivot_wider(
   data = myDataFN,
   id_cols = pid,
-  names_from = c(EVENT,CONTENT),
+  names_from = c(EVENT_TYPE,CONTENT),
   values_from = false_negatives);
 
 #removing pids for conversion to matrix for friedman test.
@@ -725,11 +725,11 @@ friedman.test(myDataFN_matrix);
 
 ## 
 
-#since we found significant effect of EVENT on FN via the friedman test
+#since we found significant effect of EVENT_TYPE on FN via the friedman test
 #we follow up with a wilcox test. 
 #(this should give similar results to friedman).
 
-pairwise.wilcox.test(myData$false_negatives,myData$EVENT, p.adj = "bonferroni", exact = F, paired = T);
+pairwise.wilcox.test(myData$false_negatives,myData$EVENT_TYPE, p.adj = "bonferroni", exact = F, paired = T);
 
 
 ########################
@@ -739,15 +739,15 @@ myDataFN$false_negatives <- sqrt(myDataFN$false_negatives + 0.5);
 
 myDataFN
 
-hist(myDataFN[(myDataFN$EVENT == "Physical") & (myDataFN$CONTENT == "None"),]$false_negatives);
-hist(myDataFN[(myDataFN$EVENT == "Physical") & (myDataFN$CONTENT == "Virtual"),]$false_negatives);
-hist(myDataFN[(myDataFN$EVENT == "Physical") & (myDataFN$CONTENT == "Virtual with Task"),]$false_negatives);
-hist(myDataFN[(myDataFN$EVENT == "Rendered") & (myDataFN$CONTENT == "None"),]$false_negatives);
-hist(myDataFN[(myDataFN$EVENT == "Rendered") & (myDataFN$CONTENT == "Virtual"),]$false_negatives);
-hist(myDataFN[(myDataFN$EVENT == "Rendered") & (myDataFN$CONTENT == "Virtual with Task"),]$false_negatives);
+hist(myDataFN[(myDataFN$EVENT_TYPE == "Physical") & (myDataFN$CONTENT == "None"),]$false_negatives);
+hist(myDataFN[(myDataFN$EVENT_TYPE == "Physical") & (myDataFN$CONTENT == "Blocks"),]$false_negatives);
+hist(myDataFN[(myDataFN$EVENT_TYPE == "Physical") & (myDataFN$CONTENT == "Blocks + Task"),]$false_negatives);
+hist(myDataFN[(myDataFN$EVENT_TYPE == "Virtual") & (myDataFN$CONTENT == "None"),]$false_negatives);
+hist(myDataFN[(myDataFN$EVENT_TYPE == "Virtual") & (myDataFN$CONTENT == "Blocks"),]$false_negatives);
+hist(myDataFN[(myDataFN$EVENT_TYPE == "Virtual") & (myDataFN$CONTENT == "Blocks + Task"),]$false_negatives);
 
 options(contrasts = c("contr.sum","contr.poly"));
-rt.ez <- ezANOVA(data = myDataFN,dv = .(false_negatives), wid = .(pid), within = .(EVENT,CONTENT), type = 3, detailed = T);
+rt.ez <- ezANOVA(data = myDataFN,dv = .(false_negatives), wid = .(pid), within = .(EVENT_TYPE,CONTENT), type = 3, detailed = T);
 rt.ez;
 
 
