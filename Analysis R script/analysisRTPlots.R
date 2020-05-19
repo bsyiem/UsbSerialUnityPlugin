@@ -29,6 +29,8 @@ library(plyr);
 # number of false positives
 # number of false negatives
 calculateMeansOfObs <- function(mpath,mfiles){
+  number_of_events = 25;
+  
   meanRT <- c();
   centralMeanRT <- c();
   peripheralMeanRT <- c();
@@ -42,9 +44,14 @@ calculateMeansOfObs <- function(mpath,mfiles){
     data <- read.csv(mfilePath, header = FALSE);
     colnames(data) <- c("ledNumber", "reactionTime", "reactionType");
     
+    #get False Negatives ratio (for 25 events)
+    false_positives <- c(false_positives,(nrow(data[(data$reactionType == 'FP'),]))/number_of_events);
+    false_negatives <- c(false_negatives,(nrow(data[(data$reactionType == 'FN'),]))/number_of_events);
+    
+    
     #get False Negatives
-    false_positives <- c(false_positives,nrow(data[(data$reactionType == 'FP'),]));
-    false_negatives <- c(false_negatives,nrow(data[(data$reactionType == 'FN'),]));
+    #false_positives <- c(false_positives,nrow(data[(data$reactionType == 'FP'),]));
+    #false_negatives <- c(false_negatives,nrow(data[(data$reactionType == 'FN'),]));
     
     #cleaning all rows with NA or blanks
     data <- data[complete.cases(data),];
@@ -127,6 +134,15 @@ addAge <- function(mdata){
   #mdata <- subset(mdata, select = -c(age.x));
   #rename(mdata,c("age.y" = "age"));
   return(mdata);
+}
+
+# adds the first event type that the participants experienced 
+# either "P" or "V"
+addFirst <- function(mdata){
+  pid <- as.factor(rep(c(1:13,15:21)));
+  first <- c("P","P","V","V","P","V","P","P","V","V","P","V","P","P","V","P","V","V","P","V");
+  first.df <- data.frame(pid,first);
+  mdata <- inner_join(mdata,first.df,by = c("pid"), keep =F);
 }
 
 
@@ -350,6 +366,8 @@ myDataCount <- addCount(myData);
 myDataCount$pid = as.factor(myDataCount$pid);
 myDataCount$CONTENT = as.factor(myDataCount$CONTENT);
 
+myData <- addFirst(myData);
+myData$pid = as.factor(myData$pid);
 
 ##
 # changing data use for plotting 
@@ -368,6 +386,50 @@ revalue(myData$CONTENT, c("NC" = "None")) -> myData$CONTENT;
 revalue(myData$CONTENT, c("VC" = "Blocks")) -> myData$CONTENT;
 revalue(myData$CONTENT, c("VCT" = "Blocks + Task")) -> myData$CONTENT;
 
+####################
+#order effects
+###################
+
+#order_effects <- myData %>% group_by(GENDER,first) %>% get_summary_stats(meanRT,type = "mean_sd");
+#pwc_oe <- myData %>% group_by(GENDER) %>% pairwise_t_test(meanRT ~ first, paired = TRUE, p.adjust.method = "bonferroni");
+
+#order_effects <- myData %>% group_by(GENDER,EVENT_TYPE,first) %>% get_summary_stats(meanRT,type = "mean_sd");
+#pwc_oe <- myData %>% group_by(GENDER,EVENT_TYPE) %>% pairwise_t_test(meanRT ~ first, paired = TRUE, p.adjust.method = "bonferroni");
+
+order_effects <- myData %>% group_by(EVENT_TYPE,first) %>% get_summary_stats(meanRT,type = "mean_sd");
+pwc_oe <- myData %>% group_by(EVENT_TYPE) %>% pairwise_t_test(meanRT ~ first, paired = TRUE, p.adjust.method = "bonferroni");
+
+pfp <- myData[myData$EVENT_TYPE == "Physical" & myData$first == "P",] %>% group_by(pid) %>% get_summary_stats(meanRT, type = "mean");
+pfp <- cbind(pfp, first = rep("P",each = 10));
+
+pfv <- myData[myData$EVENT_TYPE == "Physical" & myData$first == "V",] %>% group_by(pid) %>% get_summary_stats(meanRT, type = "mean");
+pfv <- cbind(pfv, first = rep("V",each = 10));
+
+p <- rbind(pfp,pfv);
+p <- cbind(p,EVENT_TYPE = rep("Physical", each = 20));
+
+vfp <- myData[myData$EVENT_TYPE == "Virtual" & myData$first == "P",] %>% group_by(pid) %>% get_summary_stats(meanRT, type = "mean");
+vfp <- cbind(vfp, first = rep("P",each = 10));
+
+vfv <- myData[myData$EVENT_TYPE == "Virtual" & myData$first == "V",] %>% group_by(pid) %>% get_summary_stats(meanRT, type = "mean");
+vfv <- cbind(vfv, first = rep("V",each = 10));
+
+v <- rbind(vfp,vfv);
+v <- cbind(v,EVENT_TYPE = rep("Virtual", each = 20));
+
+order_data <- rbind(p,v);
+
+order_data %>% group_by(EVENT_TYPE,first) %>% get_summary_stats(mean, type = "mean");
+order_data %>% group_by(EVENT_TYPE) %>% pairwise_t_test(mean~first,paired = TRUE, p.adjust.method = "bonferroni");
+
+### pairwise t-test of trial 3 to 4 
+# first = P
+#myData[(myData$first == "P" & myData$GENDER == "Male" & myData$EVENT_TYPE == "Physical" & myData$CONTENT == "Blocks + Task"),]$meanRT
+#myData[(myData$first == "P" & myData$GENDER == "Male" & myData$EVENT_TYPE == "Virtual" & myData$CONTENT == "None"),]$meanRT
+
+# first  = V
+#myData[(myData$first == "V" & myData$GENDER == "Male" & myData$EVENT_TYPE == "Virtual" & myData$CONTENT == "Blocks + Task"),]$meanRT
+#myData[(myData$first == "V" & myData$GENDER == "Male" & myData$EVENT_TYPE == "Physical" & myData$CONTENT == "None"),]$meanRT
 
 #########################################
 # summary statistics
@@ -429,7 +491,8 @@ p <- ggplot(reactionTime_summary, aes(x = CONTENT, y = mean, fill = EVENT_TYPE))
   scale_fill_brewer(palette = "Pastel2") +
   #labs(title= "Reaction time by CONTENT levels") +
   theme(plot.title = element_text(hjust = 0.5),
-        legend.position = "top"
+        legend.position = "top",
+        axis.line = element_line(size = 0.5)
         ) +
   geom_bar(
     stat = "identity",
@@ -501,6 +564,31 @@ rt.ez$ANOVA$SSn/(rt.ez$ANOVA$SSn+rt.ez$ANOVA$SSd);
 rt.aov <- aov(meanRT ~ CONTENT*EVENT_TYPE + Error(pid/(CONTENT*EVENT_TYPE)), myData);
 summary(rt.aov);
 
+######
+#with order/ fatigue
+#####
+ezANOVA(data = myData,dv = .(meanRT), wid = .(pid), within = .(EVENT_TYPE,CONTENT), between = .(first), type = 3, detailed = T);
+
+######################################################
+# Interaction plot
+######################################################
+interaction.plot(myData$EVENT_TYPE,myData$CONTENT,myData$meanRT);
+
+##virtual event detection suffers more from the presence of virtal content
+
+myData %>% 
+  group_by(EVENT_TYPE, CONTENT) %>% 
+  get_summary_stats(meanRT,type = "mean") %>% 
+  ggplot(aes(CONTENT, mean)) +
+  geom_line(size = 1.2, aes(group = EVENT_TYPE, color = EVENT_TYPE)) +
+  geom_point(size = 2.6, aes(color = EVENT_TYPE), shape = 15)
+
+myData %>% 
+  group_by(EVENT_TYPE, CONTENT) %>% 
+  get_summary_stats(meanRT,type = "mean") %>% 
+  ggplot(aes(EVENT_TYPE, mean)) +
+  geom_line(size = 1.2, aes(group = CONTENT, color = CONTENT)) +
+  geom_point(size = 2.6, aes(color = CONTENT), shape = 15)
 ######################################################
 # Post Hoc Analysis
 ######################################################
@@ -565,11 +653,11 @@ bxp +
   font("xlab", size = 18, face = "bold") +
   font("ylab", size = 18, face = "bold") +
   #color_palette("Dark2") +
-  scale_fill_brewer(palette = "Pastel2") +
-  #scale_fill_manual(values = c("#999999","#E69F00","#56B4E9")) +
+  #scale_fill_brewer(palette = "Accent") +
+  scale_fill_manual(values = c("grey","palevioletred2")) +
   #bgcolor("#F5F5F5") +
   #grids(linetype = "dashed", color = "white") +
-  stat_pvalue_manual(pwc,label = "p.adj",tip.length = 0.01,hide.ns = TRUE,size = 4.5) +
+  stat_pvalue_manual(pwc,label = "p.adj.signif",tip.length = 0.01,hide.ns = TRUE,size = 7) +
   labs(
     #    subtitle = "hello",
     caption = get_pwc_label(pwc)
@@ -638,7 +726,7 @@ bxp2 +
   #scale_fill_manual(values = c("#999999","#E69F00","#56B4E9")) +
   #bgcolor("#F5F5F5") +
   #grids(linetype = "dashed", color = "white") +
-  stat_pvalue_manual(pwc2,label = "p.adj",tip.length = 0.01,hide.ns = TRUE,size = 4.5) +
+  stat_pvalue_manual(pwc2,label = "p.adj.signif",tip.length = 0.01,hide.ns = TRUE,size = 7) +
   labs(
     #    subtitle = "hello",
     caption = get_pwc_label(pwc2)
